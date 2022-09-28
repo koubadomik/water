@@ -51,7 +51,7 @@ function shuffle(array) {
 
 
   current_index = 0
-  display_current(sequence[current_index++])
+  display_current(sequence[current_index])
   PAGE.addEventListener("click", function(event) {
     event.preventDefault()
     if (PAGE.clientWidth / 2 < event.clientX) {

@@ -37,15 +37,20 @@ function shuffle(array) {
   verses = shuffle(verses)
   sequence = []
   for (const verse of verses) {
-    if (verse.length === 4) {
-      sequence.push(bible[verse[0]]["name"] + " " + verse[1] + ":" + verse[2] + "-" + verse[3])
-      for (const v of bible[verse[0]]["chapters"][verse[1] - 1].slice(verse[2] - 1, verse[3])) {
-        sequence.push(v)
+    if (verse[0] in bible) {
+      if (verse.length === 4) {
+        sequence.push(bible[verse[0]]["name"] + " " + verse[1] + ":" + verse[2] + "-" + verse[3])
+        for (const v of bible[verse[0]]["chapters"][verse[1] - 1].slice(verse[2] - 1, verse[3])) {
+          sequence.push(v)
+        }
+      }
+      if (verse.length === 3) {
+        sequence.push(bible[verse[0]]["name"] + " " + verse[1] + ":" + verse[2])
+        sequence.push(bible[verse[0]]["chapters"][verse[1] - 1][verse[2] - 1])
       }
     }
-    if (verse.length === 3) {
-      sequence.push(bible[verse[0]]["name"] + " " + verse[1] + ":" + verse[2])
-      sequence.push(bible[verse[0]]["chapters"][verse[1] - 1][verse[2] - 1])
+    else {
+      console.log(verse[0])
     }
   }
 

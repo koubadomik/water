@@ -1,6 +1,7 @@
 // curl - H 'Authorization: token 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' https://raw.githubusercontent.com/koubadomik/water/main/resources/bible.json
 const BIBLE_URL = "https://raw.githubusercontent.com/koubadomik/water/main/resources/bible.json"
 const VERSES_URL = "https://raw.githubusercontent.com/koubadomik/water/main/resources/verses.json"
+const FIGURATIVE_LANGUAGE_URL = "https://raw.githubusercontent.com/koubadomik/water/main/resources/figurative_language.json"
 const FIELDS = {
   CENTER: "center",
   SECONDARY: "secondary"
@@ -42,35 +43,58 @@ function shuffle(array) {
   return array;
 }
 
-(async function() {
-  bible = await fetch_json(BIBLE_URL)
-  verses = await fetch_json(VERSES_URL)
-  verses = verses["data"]
-  verses = shuffle(verses)
-  sequence = []
-  for (const verse of verses) {
-    if (verse[0] in bible) {
-      if (verse.length === 4) {
-        sequence.push({ [FIELDS.CENTER]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}-${verse[3]}` })
-        current_verse = verse[2]
-        for (const v of bible[verse[0]]["chapters"][verse[1] - 1].slice(verse[2] - 1, verse[3])) {
-          sequence.push({
-            [FIELDS.CENTER]: v,
-            [FIELDS.SECONDARY]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${current_verse++}`
-          })
-        }
-      }
-      if (verse.length === 3) {
-        sequence.push({ [FIELDS.CENTER]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}` })
+function add_verse_to_sequence(verse, sequence, bible) {
+  if (verse[0] in bible) {
+    if (verse.length === 4) {
+      sequence.push({ [FIELDS.CENTER]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}-${verse[3]}` })
+      current_verse = verse[2]
+      for (const v of bible[verse[0]]["chapters"][verse[1] - 1].slice(verse[2] - 1, verse[3])) {
         sequence.push({
-          [FIELDS.CENTER]: bible[verse[0]]["chapters"][verse[1] - 1][verse[2] - 1],
-          [FIELDS.SECONDARY]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}`
+          [FIELDS.CENTER]: v,
+          [FIELDS.SECONDARY]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${current_verse++}`
         })
       }
     }
-    else {
-      console.log(verse[0])
+    if (verse.length === 3) {
+      sequence.push({ [FIELDS.CENTER]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}` })
+      sequence.push({
+        [FIELDS.CENTER]: bible[verse[0]]["chapters"][verse[1] - 1][verse[2] - 1],
+        [FIELDS.SECONDARY]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}`
+      })
     }
+  }
+  else {
+    console.log(verse[0])
+  }
+}
+
+(async function() {
+  bible = await fetch_json(BIBLE_URL)
+  verses = await fetch_json(VERSES_URL)
+  fig_lan = await fetch_json(FIGURATIVE_LANGUAGE_URL)
+  sequence = []
+
+  fig_lan = fig_lan["data"]
+  for (const item of fig_lan) {
+    sequence.push({
+      [FIELDS.CENTER]: `✝ ${String(item["word"])}`
+    })
+    sequence.push({
+      [FIELDS.CENTER]: `${String(item["meaning"])}`,
+      [FIELDS.SECONDARY]: `✝ ${String(item["word"])}`
+    })
+    for (const v_i of item["verse_info"]) {
+      for (const verse of v_i["verses"]) {
+        add_verse_to_sequence(verse, sequence, bible)
+      }
+    }
+  }
+
+
+  verses = verses["data"]
+  verses = shuffle(verses)
+  for (const verse of verses) {
+    add_verse_to_sequence(verse, sequence, bible)
   }
 
 

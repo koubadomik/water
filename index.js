@@ -1,6 +1,14 @@
 const BIBLE_URL = "https://raw.githubusercontent.com/koubadomik/water/main/resources/bible.json"
 const VERSES_URL = "https://raw.githubusercontent.com/koubadomik/water/main/resources/verses.json"
-const CURRENT_VERSE_FIELD = document.querySelector(".verse")
+const FIELDS = {
+  CENTER: "center",
+  SECONDARY: "secondary"
+}
+const FIELD_ELEMENTS = {
+  [FIELDS.CENTER]: document.querySelector(`.${FIELDS.CENTER}`),
+  [FIELDS.SECONDARY]: document.querySelector(`.${FIELDS.SECONDARY}`),
+
+}
 const PAGE = document.querySelector("html")
 
 async function fetch_json(url) {
@@ -8,25 +16,28 @@ async function fetch_json(url) {
   return await req.json();
 }
 
-function display_current(text) {
-  CURRENT_VERSE_FIELD.innerHTML = text
+function display_current(text, field = FIELDS.CENTER) {
+  FIELD_ELEMENTS[field].innerHTML = text
+}
+
+function display_from_dict(mapping) {
+  const rest_of_screen = Object.values(FIELDS).filter(value => !Object.keys(mapping).includes(value))
+  for (const [k, v] of Object.entries(mapping)) {
+    display_current(v, k)
+  }
+  for (const field of rest_of_screen) {
+    display_current("", field)
+  }
 }
 
 function shuffle(array) {
   let currentIndex = array.length, randomIndex;
-
-  // While there remain elements to shuffle.
   while (currentIndex != 0) {
-
-    // Pick a remaining element.
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
-
-    // And swap it with the current element.
     [array[currentIndex], array[randomIndex]] = [
       array[randomIndex], array[currentIndex]];
   }
-
   return array;
 }
 
@@ -39,14 +50,21 @@ function shuffle(array) {
   for (const verse of verses) {
     if (verse[0] in bible) {
       if (verse.length === 4) {
-        sequence.push(bible[verse[0]]["name"] + " " + verse[1] + ":" + verse[2] + "-" + verse[3])
+        sequence.push({ [FIELDS.CENTER]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}-${verse[3]}` })
+        current_verse = verse[2]
         for (const v of bible[verse[0]]["chapters"][verse[1] - 1].slice(verse[2] - 1, verse[3])) {
-          sequence.push(v)
+          sequence.push({
+            [FIELDS.CENTER]: v,
+            [FIELDS.SECONDARY]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${current_verse++}`
+          })
         }
       }
       if (verse.length === 3) {
-        sequence.push(bible[verse[0]]["name"] + " " + verse[1] + ":" + verse[2])
-        sequence.push(bible[verse[0]]["chapters"][verse[1] - 1][verse[2] - 1])
+        sequence.push({ [FIELDS.CENTER]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}` })
+        sequence.push({
+          [FIELDS.CENTER]: bible[verse[0]]["chapters"][verse[1] - 1][verse[2] - 1],
+          [FIELDS.SECONDARY]: `✝ ${bible[verse[0]]["name"]} ${verse[1]}:${verse[2]}`
+        })
       }
     }
     else {
@@ -56,22 +74,22 @@ function shuffle(array) {
 
 
   current_index = 0
-  display_current(sequence[current_index])
+  display_from_dict(sequence[current_index])
   PAGE.addEventListener("click", function(event) {
     event.preventDefault()
     if (PAGE.clientWidth / 2 < event.clientX) {
       if (current_index === sequence.length - 1) {
-        display_current(sequence[current_index])
+        display_from_dict(sequence[current_index])
       } else {
-        display_current(sequence[++current_index])
+        display_from_dict(sequence[++current_index])
       }
     }
     else if (PAGE.clientWidth / 2 >= event.clientX) {
       if (current_index === 0) {
-        display_current(sequence[current_index])
+        display_from_dict(sequence[current_index])
       }
       else {
-        display_current(sequence[--current_index])
+        display_from_dict(sequence[--current_index])
       }
     }
   })

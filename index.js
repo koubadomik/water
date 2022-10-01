@@ -1,3 +1,4 @@
+// curl - H 'Authorization: token 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' https://raw.githubusercontent.com/koubadomik/water/main/resources/bible.json
 const BIBLE_URL = "https://raw.githubusercontent.com/koubadomik/water/main/resources/bible.json"
 const VERSES_URL = "https://raw.githubusercontent.com/koubadomik/water/main/resources/verses.json"
 const FIELDS = {

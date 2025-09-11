@@ -14,6 +14,25 @@
   textarea { white-space: pre-wrap; }
   /* mobile-friendly reveal button */
   #reveal { font-size: 1.25rem; padding: 1rem; }
+  /* Sticky reveal button at bottom */
+  .reveal-container {
+    position: sticky;
+    bottom: 0;
+    background: #1f2937;
+    padding-top: 0.5rem;
+  }
+  /* Responsivity for mobile */
+  @media (max-width: 768px) {
+    h1 { font-size: 1.5rem; }
+    #verse-container { font-size: 1.5rem; line-height: 2.2rem; }
+    input, button, select, textarea { font-size: 1.1rem !important; }
+    #reveal { font-size: 1.5rem; padding: 1.25rem; }
+  }
+  @media (max-width: 480px) {
+    #verse-container { font-size: 1.7rem; line-height: 2.4rem; }
+    input, button, select, textarea { font-size: 1.2rem !important; }
+    #reveal { font-size: 1.7rem; padding: 1.5rem; }
+  }
 </style>
 </head>
 <body class="flex flex-col items-center p-6 font-sans">
@@ -66,8 +85,10 @@
   <!-- Input (only used for fill mode typing) -->
   <input id="input" type="text" placeholder="Type here..." class="w-full border p-2 rounded text-lg text-black"/>
 
-  <!-- Big reveal button under input (mobile friendly) -->
-  <button id="reveal" class="bg-yellow-500 text-black text-2xl w-full py-4 rounded hover:bg-yellow-600 mt-4">👁 Reveal</button>
+  <!-- Sticky Reveal button -->
+  <div class="reveal-container">
+    <button id="reveal" class="bg-yellow-500 text-black text-2xl w-full py-4 rounded hover:bg-yellow-600">👁 Reveal</button>
+  </div>
 </div>
 
 <script>
@@ -375,7 +396,8 @@ document.getElementById("difficulty").addEventListener("change", e=>{
 /* -------------------- Init on load -------------------- */
 loadBible();
 loadSavedTexts();
+
+/* --- your existing JS unchanged --- */
 </script>
 </body>
 </html>
-

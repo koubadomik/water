@@ -1,72 +1,124 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-<meta charset="UTF-8">
-<title>Verse Practice</title>
+<meta charset="utf-8" />
+<title>Verse / Text Practice</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  body { background-color: #1f2937; color: #e5e7eb; } /* Dark mode background/text */
+  body { background-color: #1f2937; color: #e5e7eb; }
   .blank { border-bottom: 2px solid gray; padding: 0 4px; min-width: 20px; display: inline-block; }
-  .correct { border-color: #10b981; color: #10b981; } /* green */
-  .wrong { border-color: #ef4444; color: #ef4444; }    /* red */
+  .correct { color: #10b981; }    /* green */
+  .wrong   { color: #ef4444; }    /* red */
+  .missing { color: #fbbf24; }    /* yellow */
   .current { background-color: #374151; padding: 2px 4px; border-radius: 2px; }
+  textarea { white-space: pre-wrap; }
+  /* mobile-friendly reveal button */
+  #reveal { font-size: 1.25rem; padding: 1rem; }
 </style>
 </head>
-<body class="flex flex-col items-center p-10 font-sans">
+<body class="flex flex-col items-center p-6 font-sans">
 
-<div class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow">
-  <h1 class="text-2xl font-bold mb-4 text-white">Verse Practice</h1>
+<div class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow space-y-4">
+  <h1 class="text-2xl font-bold text-white">Verse / Text Practice</h1>
 
-  <div class="mb-4">
-    <input id="verse-input" type="text" placeholder="Zadej odkaz (např. 'Zj 1:1', 'Zj 1', 'Zj 1:3-7')" class="w-full border p-2 rounded text-lg text-black"/>
-    <button id="load-verse" class="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600">Načíst</button>
+  <!-- Verse input -->
+  <div>
+    <input id="verse-input" type="text" placeholder="Zadej odkaz (Zj 1:1, Zj 1:3-7)" class="w-full border p-2 rounded text-lg text-black"/>
+    <button id="load-verse" class="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600">Načíst verš</button>
   </div>
 
-  <div class="mb-4" id="file-container">
+  <!-- Bible file upload (hidden until needed) -->
+  <div id="file-container" class="hidden">
     <input type="file" id="bible-file" accept=".json"/>
     <div id="status" class="text-sm text-gray-400 mt-1"></div>
   </div>
 
-  <div class="mb-4">
+  <!-- Custom texts (collapsible) -->
+  <div class="bg-gray-700 p-4 rounded">
+    <button id="toggle-texts" class="bg-gray-600 w-full text-white py-2 rounded mb-2">📂 Moje texty (otevřít / zavřít)</button>
+    <div id="custom-section" class="hidden space-y-2">
+      <input id="custom-title" type="text" placeholder="Název textu" class="w-full border p-2 rounded text-black"/>
+      <textarea id="custom-text" rows="4" placeholder="Sem napiš svůj text (podporuje více řádků)..." class="w-full border p-2 rounded text-black"></textarea>
+      <div class="flex gap-2">
+        <button id="save-text" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Uložit text</button>
+        <button id="clear-edit" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-500">Zrušit edit</button>
+      </div>
+      <div id="saved-texts" class="mt-2 space-y-1"></div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="flex flex-wrap gap-2 items-center">
     <select id="difficulty" class="border px-2 py-1 rounded text-black">
+      <option value="0">Show All</option>
       <option value="1">Easy</option>
       <option value="2" selected>Medium</option>
       <option value="3">Hard</option>
       <option value="4">Very Hard</option>
       <option value="5">Extreme</option>
     </select>
-    <button id="restart" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 ml-2">Restart</button>
+    <button id="restart" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Restart</button>
   </div>
 
-  <div id="verse-container" class="mb-4 text-xl"></div>
+  <!-- Verse/Text display -->
+  <div id="verse-container" class="text-2xl leading-relaxed whitespace-pre-wrap"></div>
+
+  <!-- Input (only used for fill mode typing) -->
   <input id="input" type="text" placeholder="Type here..." class="w-full border p-2 rounded text-lg text-black"/>
+
+  <!-- Big reveal button under input (mobile friendly) -->
+  <button id="reveal" class="bg-yellow-500 text-black text-2xl w-full py-4 rounded hover:bg-yellow-600 mt-4">👁 Reveal</button>
 </div>
 
 <script>
+/* -------------------- Globals -------------------- */
 let bible = {};
-let words = [];
-let blanks = [];
-let typed = [];
+let words = [];       // tokens (words, spaces, newlines)
+let blanks = [];      // boolean per token: should this token be blank (true for fillable words)
+let typed = [];       // what user typed (string) per token
+let locked = [];      // boolean per token: true after user confirmed (space/enter) or reveal
 let currentIdx = 0;
 let difficulty = 2;
+let revealPointer = 0;
+let editingIndex = null;
+let currentVerseArray = null; // store currently loaded verses/texts for restart
 
-// -------------------- Load Bible --------------------
-function loadBibleFromLocalStorage() {
-  if(localStorage.getItem("bibleJSON")){
-    try{
+/* helper: escape HTML */
+function escapeHTML(s){
+  return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+
+/* -------------------- Bible loading (GitHub -> localStorage -> file) -------------------- */
+async function loadBible() {
+  try {
+    const res = await fetch("https://raw.githubusercontent.com/koubadomik/water/main/resources/bible.json");
+    if (!res.ok) throw new Error("Network response not ok");
+    bible = await res.json();
+    document.getElementById("status").innerText = "Bible loaded from GitHub ✅";
+    document.getElementById("file-container").style.display = "none";
+    return;
+  } catch (e) {
+    console.warn("GitHub Bible fetch failed:", e);
+  }
+
+  if(localStorage.getItem("bibleJSON")) {
+    try {
       bible = JSON.parse(localStorage.getItem("bibleJSON"));
       document.getElementById("status").innerText = "Bible loaded from localStorage ✅";
       document.getElementById("file-container").style.display = "none";
-    } catch(e){
+      return;
+    } catch(e) {
       console.error("Failed to parse Bible JSON from localStorage", e);
     }
   }
+
+  // fallback: ask for file
+  document.getElementById("file-container").style.display = "block";
 }
 
 document.getElementById("bible-file").addEventListener("change", function(e){
   const file = e.target.files[0];
   if(!file) return;
-
   const reader = new FileReader();
   reader.onload = function(evt){
     try{
@@ -74,7 +126,6 @@ document.getElementById("bible-file").addEventListener("change", function(e){
       localStorage.setItem("bibleJSON", JSON.stringify(bible));
       document.getElementById("status").innerText = "Bible loaded from file and saved to localStorage ✅";
       document.getElementById("file-container").style.display = "none";
-      console.log("Bible loaded:", bible);
     } catch(err){
       console.error("Failed to parse Bible JSON:", err);
       document.getElementById("status").innerText = "Error loading Bible JSON ❌";
@@ -83,10 +134,10 @@ document.getElementById("bible-file").addEventListener("change", function(e){
   reader.readAsText(file, "utf-8");
 });
 
-// -------------------- Verse selection --------------------
+/* -------------------- Verse parsing -------------------- */
 function parseReference(ref){
   const match = ref.match(/^(\w+)\s+(\d+)(?::(\d+)(?:-(\d+)(?::(\d+))?)?)?$/);
-  if(!match) { alert("Špatný formát"); return null; }
+  if(!match) { alert("Špatný formát (např. 'Zj 1:1')."); return null; }
   const book = match[1];
   const ch1 = parseInt(match[2]);
   const v1 = match[3] ? parseInt(match[3]) : null;
@@ -94,7 +145,7 @@ function parseReference(ref){
 
   let verses = [];
   if(!v1){
-    for(let i=0;i<bible[book]["chapters"][ch1-1].length;i++) verses.push(bible[book]["chapters"][ch1-1][i]);
+    verses = bible[book]["chapters"][ch1-1];
   } else if(v1 && !v2){
     verses.push(bible[book]["chapters"][ch1-1][v1-1]);
   } else if(v1 && v2){
@@ -103,92 +154,227 @@ function parseReference(ref){
   return verses;
 }
 
-// -------------------- Fill-in-the-blanks logic --------------------
+/* -------------------- Init blanks (preserve line breaks & spaces) -------------------- */
 function initBlanks(verseArray){
-  words = [];
-  blanks = [];
-  typed = [];
+  currentVerseArray = verseArray;
+  words = []; blanks = []; typed = []; locked = [];
   verseArray.forEach(v => {
-    const w = v.split(" ");
-    const hide_ratio = {1:0.2,2:0.4,3:0.6,4:0.8,5:1.0}[difficulty];
-    const num_to_hide = Math.floor(w.length * hide_ratio);
-    const indices = new Set();
-    while(indices.size < num_to_hide) indices.add(Math.floor(Math.random()*w.length));
-
-    w.forEach((word,i)=>{
-      words.push(word);
-      blanks.push(indices.has(i));
-      typed.push("");
-    });
-    words.push(" "); // add space between verses
+    // split keeping whitespace tokens (spaces and newlines)
+    const tokens = v.split(/(\s+|\n)/);
+    if(difficulty === 0){
+      tokens.forEach(tok=>{
+        words.push(tok);
+        blanks.push(false);
+        typed.push("");
+        locked.push(false);
+      });
+    } else {
+      // determine which token indices correspond to "real words" (non-whitespace)
+      const real = tokens.map((t,i)=>({t,i})).filter(x=>x.t.trim()!=="" && !x.t.match(/^\s+$/));
+      const hide_ratio = {1:0.2,2:0.4,3:0.6,4:0.8,5:1.0}[difficulty];
+      const num_to_hide = Math.floor(real.length * hide_ratio);
+      const indices = new Set();
+      while(indices.size < num_to_hide && real.length>0){
+        indices.add(real[Math.floor(Math.random()*real.length)].i);
+      }
+      tokens.forEach((tok,i)=>{
+        words.push(tok);
+        blanks.push(indices.has(i));
+        typed.push("");
+        locked.push(false);
+      });
+    }
+    // add a newline separator between verses (if not already)
+    words.push("\n");
     blanks.push(false);
     typed.push("");
+    locked.push(false);
   });
+  // set current index to first blank
   currentIdx = blanks.findIndex(b=>b);
+  if(currentIdx === -1) currentIdx = 0;
+  revealPointer = 0;
   render();
 }
 
+/* -------------------- Render -------------------- */
 function render(){
   const container = document.getElementById("verse-container");
   container.innerHTML = words.map((w,i)=>{
     if(blanks[i]){
-      let cls = "";
-      if(typed[i]) cls = typed[i]===w?"correct":"wrong";
-      if(i===currentIdx) cls+=" current";
-      let display = typed[i]||"_".repeat(Math.max(1,w.length));
-      return `<span class="blank ${cls}" data-index="${i}">${display}</span>`;
+      // blankable token
+      if(locked[i]){
+        // locked => show per-character colored diff
+        const correct = words[i] || "";
+        const input = typed[i] || "";
+        let out = "";
+        const maxlen = Math.max(input.length, correct.length);
+        for(let j=0;j<maxlen;j++){
+          const cInput = input[j] ?? "";
+          const cCorrect = correct[j] ?? "";
+          if (j < input.length){
+            if (cInput === cCorrect) out += `<span class="correct">${escapeHTML(cInput)}</span>`;
+            else out += `<span class="wrong">${escapeHTML(cInput)}</span>`;
+          } else { // missing characters
+            out += `<span class="missing">${escapeHTML(cCorrect)}</span>`;
+          }
+        }
+        return `<span class="blank ${i===currentIdx? 'current' : ''}" data-index="${i}">${out}</span>`;
+      } else {
+        // unlocked => show typed plain (no colors), plus underscores for rest
+        const display = typed[i] || "";
+        const rest = "_".repeat(Math.max(1, (words[i]||"").length - display.length));
+        return `<span class="blank ${i===currentIdx? 'current' : ''}" data-index="${i}">${escapeHTML(display)}${rest}</span>`;
+      }
     } else {
-      if(w===" ") return "<br/>";
-      return `<span class="mx-1">${w}</span>`;
+      // not a blank token: newline or normal token
+      if(w === "\n") return "<br/>";
+      return `<span class="mx-1">${escapeHTML(w)}</span>`;
     }
-  }).join(" ");
+  }).join("");
+  // ensure input is focused for convenience
   document.getElementById("input").focus();
 }
 
+/* -------------------- Navigation -------------------- */
 function moveToNextBlank(){
   if(currentIdx<0) return;
+  // mark current as locked before moving (if it's a blank and not already locked)
+  if(blanks[currentIdx]) locked[currentIdx] = true;
   currentIdx = blanks.findIndex((b,i)=>b && i>currentIdx);
+  if(currentIdx === -1) currentIdx = blanks.findIndex(b=>b); // keep somewhere
 }
 
-// -------------------- Event listeners --------------------
+/* -------------------- Reveal behaviour -------------------- */
+document.getElementById("reveal").addEventListener("click", ()=>{
+  const idx = blanks.findIndex((b,i)=>i>=revealPointer && b);
+  if(idx >= 0){
+    typed[idx] = words[idx];
+    locked[idx] = true;
+    revealPointer = idx+1;
+    // if reveal advanced over current blank, we step currentIdx to next blank
+    if(idx === currentIdx) moveToNextBlank();
+    render();
+  }
+});
+
+/* -------------------- Input handling (typing/locking) -------------------- */
 document.getElementById("input").addEventListener("input", e=>{
-  if(currentIdx<0) return;
-  let val = e.target.value;
-  typed[currentIdx] = val;
+  if(currentIdx<0 || !blanks[currentIdx]) return;
+  typed[currentIdx] = e.target.value;
+  // while typing, do NOT color — render shows plain display for unlocked words
   render();
 });
 
 document.getElementById("input").addEventListener("keydown", e=>{
-  if(e.key===" "){
+  if(currentIdx<0) return;
+  if(!blanks[currentIdx]) return;
+  if(e.key === " " || e.key === "Enter"){
+    // lock current token and move to next blank
     typed[currentIdx] = e.target.value.trim();
+    locked[currentIdx] = true;
     moveToNextBlank();
     e.target.value = "";
     render();
-  }
-  if(e.key==="Enter"){
-    moveToNextBlank();
-    e.target.value = "";
-    render();
+    e.preventDefault();
   }
 });
 
-document.getElementById("restart").addEventListener("click", ()=>initBlanks(words.filter((_,i)=>blanks[i])));
+/* -------------------- Restart -------------------- */
+document.getElementById("restart").addEventListener("click", ()=>{
+  if(currentVerseArray) initBlanks(currentVerseArray);
+});
+
+/* -------------------- Load verse (Bible) -------------------- */
+document.getElementById("load-verse").addEventListener("click", ()=>{
+  const ref = document.getElementById("verse-input").value.trim();
+  if(!bible || Object.keys(bible).length===0){
+    alert("Bible není načtena.");
+    return;
+  }
+  const verses = parseReference(ref);
+  if(verses && verses.length>0){
+    initBlanks(verses);
+  }
+});
+
+/* -------------------- Custom texts: save/edit/delete/list -------------------- */
+function loadSavedTexts(){
+  const saved = JSON.parse(localStorage.getItem("customTexts")||"[]");
+  const container = document.getElementById("saved-texts");
+  container.innerHTML = "";
+  saved.forEach((t,i)=>{
+    const row = document.createElement("div");
+    row.className = "flex items-center space-x-2";
+
+    const btn = document.createElement("button");
+    btn.textContent = t.title;
+    btn.className = "bg-gray-600 flex-grow text-white px-2 py-1 rounded hover:bg-gray-500 text-left";
+    btn.onclick = ()=>{ initBlanks([t.text]); };
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏";
+    editBtn.className = "bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600";
+    editBtn.onclick = ()=>{
+      document.getElementById("custom-title").value = t.title;
+      document.getElementById("custom-text").value = t.text;
+      editingIndex = i;
+    };
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "❌";
+    delBtn.className = "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600";
+    delBtn.onclick = ()=>{
+      saved.splice(i,1);
+      localStorage.setItem("customTexts", JSON.stringify(saved));
+      loadSavedTexts();
+    };
+
+    row.appendChild(btn);
+    row.appendChild(editBtn);
+    row.appendChild(delBtn);
+    container.appendChild(row);
+  });
+}
+
+document.getElementById("save-text").addEventListener("click", ()=>{
+  const title = document.getElementById("custom-title").value.trim();
+  const text = document.getElementById("custom-text").value;
+  if(!title || !text){ alert("Vyplň název i text!"); return; }
+  let saved = JSON.parse(localStorage.getItem("customTexts")||"[]");
+
+  if(editingIndex !== null){
+    saved[editingIndex] = {title, text};
+    editingIndex = null;
+  } else {
+    saved.push({title, text});
+  }
+  localStorage.setItem("customTexts", JSON.stringify(saved));
+  document.getElementById("custom-title").value = "";
+  document.getElementById("custom-text").value = "";
+  loadSavedTexts();
+});
+
+document.getElementById("clear-edit").addEventListener("click", ()=>{
+  editingIndex = null;
+  document.getElementById("custom-title").value = "";
+  document.getElementById("custom-text").value = "";
+});
+
+/* -------------------- Collapsible custom texts -------------------- */
+document.getElementById("toggle-texts").addEventListener("click", ()=>{
+  const section = document.getElementById("custom-section");
+  section.classList.toggle("hidden");
+});
+
+/* -------------------- Difficulty change -------------------- */
 document.getElementById("difficulty").addEventListener("change", e=>{
   difficulty = parseInt(e.target.value);
 });
 
-document.getElementById("load-verse").addEventListener("click", ()=>{
-  const ref = document.getElementById("verse-input").value.trim();
-  if(!bible || Object.keys(bible).length===0){
-    alert("Bible není načtena. Vyber soubor JSON výše.");
-    return;
-  }
-  const verses = parseReference(ref);
-  if(verses && verses.length>0) initBlanks(verses);
-});
-
-// -------------------- Initialize --------------------
-loadBibleFromLocalStorage();
+/* -------------------- Init on load -------------------- */
+loadBible();
+loadSavedTexts();
 </script>
 </body>
 </html>

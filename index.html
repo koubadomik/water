@@ -33,6 +33,17 @@
     input, button, select, textarea { font-size: 1.2rem !important; }
     #reveal { font-size: 1.7rem; padding: 1.5rem; }
   }
+  
+  #sticky-controls {
+  z-index: 50;
+  border-top: 1px solid #444;
+}
+.blank.current {
+  background: rgba(255,255,0,0.2);
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
 </style>
 </head>
 <body class="flex flex-col items-center p-6 font-sans">
@@ -66,29 +77,32 @@
     </div>
   </div>
 
-  <!-- Controls -->
-  <div class="flex flex-wrap gap-2 items-center">
-    <select id="difficulty" class="border px-2 py-1 rounded text-black">
-      <option value="0">Show All</option>
-      <option value="1">Easy</option>
-      <option value="2" selected>Medium</option>
-      <option value="3">Hard</option>
-      <option value="4">Very Hard</option>
-      <option value="5">Extreme</option>
-    </select>
-    <button id="restart" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Restart</button>
-  </div>
+<!-- Controls -->
+<div class="flex flex-wrap gap-2 items-center">
+  <select id="difficulty" class="border px-2 py-1 rounded text-black">
+    <option value="0">Show All</option>
+    <option value="1">Easy</option>
+    <option value="2" selected>Medium</option>
+    <option value="3">Hard</option>
+    <option value="4">Very Hard</option>
+    <option value="5">Extreme</option>
+  </select>
+  <button id="restart" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Restart</button>
 
-  <!-- Verse/Text display -->
-  <div id="verse-container" class="text-2xl leading-relaxed whitespace-pre-wrap"></div>
+  <!-- New input mode toggle -->
+  <label class="flex items-center gap-1 text-sm ml-2">
+    <input type="checkbox" id="toggle-input" checked />
+    Input mode
+  </label>
+</div>
+<!-- Verse/Text display -->
+<div id="verse-container" class="text-2xl leading-relaxed whitespace-pre-wrap pb-24"></div>
 
-  <!-- Input (only used for fill mode typing) -->
-  <input id="input" type="text" placeholder="Type here..." class="w-full border p-2 rounded text-lg text-black"/>
-
-  <!-- Sticky Reveal button -->
-  <div class="reveal-container">
-    <button id="reveal" class="bg-yellow-500 text-black text-2xl w-full py-4 rounded hover:bg-yellow-600">👁 Reveal</button>
-  </div>
+<!-- Sticky input + controls -->
+<div id="sticky-controls" class="fixed bottom-0 left-0 w-full bg-gray-800 p-3 flex items-center gap-2">
+  <input id="input" type="text" placeholder="Type here..."
+         class="flex-grow border p-2 rounded text-lg text-black"/>
+  <button id="reveal" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-lg">Reveal</button>
 </div>
 
 <script>
@@ -217,15 +231,11 @@ function initBlanks(verseArray){
   revealPointer = 0;
   render();
 }
-
-/* -------------------- Render -------------------- */
 function render(){
   const container = document.getElementById("verse-container");
   container.innerHTML = words.map((w,i)=>{
     if(blanks[i]){
-      // blankable token
       if(locked[i]){
-        // locked => show per-character colored diff
         const correct = words[i] || "";
         const input = typed[i] || "";
         let out = "";
@@ -236,26 +246,50 @@ function render(){
           if (j < input.length){
             if (cInput === cCorrect) out += `<span class="correct">${escapeHTML(cInput)}</span>`;
             else out += `<span class="wrong">${escapeHTML(cInput)}</span>`;
-          } else { // missing characters
+          } else {
             out += `<span class="missing">${escapeHTML(cCorrect)}</span>`;
           }
         }
-        return `<span class="blank ${i===currentIdx? 'current' : ''}" data-index="${i}">${out}</span>`;
+        return `<span class="blank ${i===currentIdx? 'current' : ''}" id="word-${i}">${out}</span>`;
       } else {
-        // unlocked => show typed plain (no colors), plus underscores for rest
         const display = typed[i] || "";
         const rest = "_".repeat(Math.max(1, (words[i]||"").length - display.length));
-        return `<span class="blank ${i===currentIdx? 'current' : ''}" data-index="${i}">${escapeHTML(display)}${rest}</span>`;
+        return `<span class="blank ${i===currentIdx? 'current' : ''}" id="word-${i}">${escapeHTML(display)}${rest}</span>`;
       }
     } else {
-      // not a blank token: newline or normal token
       if(w === "\n") return "<br/>";
       return `<span class="mx-1">${escapeHTML(w)}</span>`;
     }
   }).join("");
-  // ensure input is focused for convenience
-  document.getElementById("input").focus();
+
+  // focus input only if input mode enabled
+  if(document.getElementById("toggle-input")?.checked){
+    const inputEl = document.getElementById("input");
+    inputEl.focus();
+  }
+
+  // auto-scroll current word into view
+  const currentEl = document.getElementById(`word-${currentIdx}`);
+  if(currentEl){
+    currentEl.scrollIntoView({behavior:"smooth", block:"center"});
+  }
 }
+
+// Reveal button scroll support
+document.getElementById("reveal").addEventListener("click", ()=>{
+  revealNext(); // your reveal logic
+  render();
+});
+/* -------------------- Input mode toggle -------------------- */
+document.getElementById("toggle-input").addEventListener("change", e=>{
+  const inputBox = document.getElementById("input");
+  if(e.target.checked){
+    inputBox.style.display = "block";
+    render();
+  } else {
+    inputBox.style.display = "none";
+  }
+});
 
 /* -------------------- Navigation -------------------- */
 function moveToNextBlank(){

@@ -33,22 +33,50 @@
     input, button, select, textarea { font-size: 1.2rem !important; }
     #reveal { font-size: 1.7rem; padding: 1.5rem; }
   }
-  
-  #sticky-controls {
+  /* Adjust sticky controls */
+#sticky-controls {
   z-index: 50;
   border-top: 1px solid #444;
-}
-.blank.current {
-  background: rgba(255,255,0,0.2);
-  border-radius: 4px;
-  padding: 0 2px;
+  /* bottom-4 in HTML class moves it slightly above bottom */
 }
 
+/* Stretch reveal when input hidden */
+#input:disabled, #input[style*="display: none"] + #reveal {
+  flex-grow: 1;
+}
+  .blank.current {
+    background: rgba(255,255,0,0.2);
+    border-radius: 4px;
+    padding: 0 2px;
+  }
+  /* Menu styling */
+  #app-menu {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  #app-menu button.active {
+    background-color: #2563eb;
+    color: white;
+  }
 </style>
 </head>
 <body class="flex flex-col items-center p-6 font-sans">
 
-<div class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow space-y-4">
+<!-- Top menu -->
+<div id="app-menu" class="w-full max-w-4xl">
+  <button data-app="byheart" class="px-4 py-2 rounded">ByHeart</button>
+  <button data-app="sealed" class="px-4 py-2 rounded">Sealed</button>
+</div>
+
+<!-- Main container -->
+
+<!-- Sealed placeholder -->
+<div id="sealed-container" class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow space-y-4 hidden">
+  <h1 class="text-2xl font-bold text-white">Sealed (coming soon)</h1>
+  <p class="text-gray-300">This page is a placeholder for future content.</p>
+</div>
+<div id="byheart-container" class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow space-y-4">
   <h1 class="text-2xl font-bold text-white">Verse / Text Practice</h1>
 
   <!-- Verse input -->
@@ -77,32 +105,34 @@
     </div>
   </div>
 
-<!-- Controls -->
-<div class="flex flex-wrap gap-2 items-center">
-  <select id="difficulty" class="border px-2 py-1 rounded text-black">
-    <option value="0">Show All</option>
-    <option value="1">Easy</option>
-    <option value="2" selected>Medium</option>
-    <option value="3">Hard</option>
-    <option value="4">Very Hard</option>
-    <option value="5">Extreme</option>
-  </select>
-  <button id="restart" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Restart</button>
+  <!-- Controls -->
+  <div class="flex flex-wrap gap-2 items-center">
+    <select id="difficulty" class="border px-2 py-1 rounded text-black">
+      <option value="0">Show All</option>
+      <option value="1">Easy</option>
+      <option value="2" selected>Medium</option>
+      <option value="3">Hard</option>
+      <option value="4">Very Hard</option>
+      <option value="5">Extreme</option>
+    </select>
+    <button id="restart" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Restart</button>
 
-  <!-- New input mode toggle -->
-  <label class="flex items-center gap-1 text-sm ml-2">
-    <input type="checkbox" id="toggle-input" checked />
-    Input mode
-  </label>
+    <!-- New input mode toggle -->
+    <label class="flex items-center gap-1 text-sm ml-2">
+      <input type="checkbox" id="toggle-input" checked />
+      Input mode
+    </label>
+  </div>
+
+  <!-- Verse/Text display -->
+  <div id="verse-container" class="text-2xl leading-relaxed whitespace-pre-wrap pb-24"></div>
 </div>
-<!-- Verse/Text display -->
-<div id="verse-container" class="text-2xl leading-relaxed whitespace-pre-wrap pb-24"></div>
 
 <!-- Sticky input + controls -->
-<div id="sticky-controls" class="fixed bottom-0 left-0 w-full bg-gray-800 p-3 flex items-center gap-2">
+<div id="sticky-controls" class="fixed bottom-4 left-0 w-full bg-gray-800 p-3 flex items-center gap-2">
   <input id="input" type="text" placeholder="Type here..."
          class="flex-grow border p-2 rounded text-lg text-black"/>
-  <button id="reveal" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-lg">Reveal</button>
+  <button id="reveal" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-lg flex-shrink-0">Reveal</button>
 </div>
 
 <script>
@@ -118,16 +148,18 @@ let revealPointer = 0;
 let editingIndex = null;
 let currentVerseArray = null; // store currently loaded verses/texts for restart
 
-/* helper: escape HTML */
-function escapeHTML(s){
-  return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
-}
+/* Remember last verse/text */
+const LAST_VERSE_KEY = "lastVerse";
+const LAST_APP_KEY = "lastApp";
 
-/* -------------------- Bible loading (GitHub -> localStorage -> file) -------------------- */
+/* -------------------- Helper -------------------- */
+function escapeHTML(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+/* -------------------- Bible loading -------------------- */
 async function loadBible() {
   try {
     const res = await fetch("https://raw.githubusercontent.com/koubadomik/water/main/resources/bible.json");
-    if (!res.ok) throw new Error("Network response not ok");
+    if(!res.ok) throw new Error("Network response not ok");
     bible = await res.json();
     document.getElementById("status").innerText = "Bible loaded from GitHub ✅";
     document.getElementById("file-container").style.display = "none";
@@ -147,7 +179,6 @@ async function loadBible() {
     }
   }
 
-  // fallback: ask for file
   document.getElementById("file-container").style.display = "block";
 }
 
@@ -173,265 +204,180 @@ document.getElementById("bible-file").addEventListener("change", function(e){
 function parseReference(ref){
   const match = ref.match(/^(\w+)\s+(\d+)(?::(\d+)(?:-(\d+)(?::(\d+))?)?)?$/);
   if(!match) { alert("Špatný formát (např. 'Zj 1:1')."); return null; }
-  const book = match[1];
-  const ch1 = parseInt(match[2]);
-  const v1 = match[3] ? parseInt(match[3]) : null;
-  const v2 = match[4] ? parseInt(match[4]) : null;
-
+  const book = match[1], ch1 = parseInt(match[2]), v1 = match[3] ? parseInt(match[3]) : null, v2 = match[4] ? parseInt(match[4]) : null;
   let verses = [];
-  if(!v1){
-    verses = bible[book]["chapters"][ch1-1];
-  } else if(v1 && !v2){
-    verses.push(bible[book]["chapters"][ch1-1][v1-1]);
-  } else if(v1 && v2){
-    for(let i=v1-1;i<v2;i++) verses.push(bible[book]["chapters"][ch1-1][i]);
-  }
+  if(!v1) verses = bible[book]["chapters"][ch1-1];
+  else if(v1 && !v2) verses.push(bible[book]["chapters"][ch1-1][v1-1]);
+  else for(let i=v1-1;i<v2;i++) verses.push(bible[book]["chapters"][ch1-1][i]);
   return verses;
 }
 
-/* -------------------- Init blanks (preserve line breaks & spaces) -------------------- */
+/* -------------------- Init blanks -------------------- */
 function initBlanks(verseArray){
   currentVerseArray = verseArray;
   words = []; blanks = []; typed = []; locked = [];
-  verseArray.forEach(v => {
-    // split keeping whitespace tokens (spaces and newlines)
+  verseArray.forEach(v=>{
     const tokens = v.split(/(\s+|\n)/);
-    if(difficulty === 0){
-      tokens.forEach(tok=>{
-        words.push(tok);
-        blanks.push(false);
-        typed.push("");
-        locked.push(false);
-      });
+    if(difficulty===0){
+      tokens.forEach(tok=>{ words.push(tok); blanks.push(false); typed.push(""); locked.push(false); });
     } else {
-      // determine which token indices correspond to "real words" (non-whitespace)
       const real = tokens.map((t,i)=>({t,i})).filter(x=>x.t.trim()!=="" && !x.t.match(/^\s+$/));
       const hide_ratio = {1:0.2,2:0.4,3:0.6,4:0.8,5:1.0}[difficulty];
-      const num_to_hide = Math.floor(real.length * hide_ratio);
+      const num_to_hide = Math.floor(real.length*hide_ratio);
       const indices = new Set();
-      while(indices.size < num_to_hide && real.length>0){
-        indices.add(real[Math.floor(Math.random()*real.length)].i);
-      }
-      tokens.forEach((tok,i)=>{
-        words.push(tok);
-        blanks.push(indices.has(i));
-        typed.push("");
-        locked.push(false);
-      });
+      while(indices.size<num_to_hide && real.length>0) indices.add(real[Math.floor(Math.random()*real.length)].i);
+      tokens.forEach((tok,i)=>{ words.push(tok); blanks.push(indices.has(i)); typed.push(""); locked.push(false); });
     }
-    // add a newline separator between verses (if not already)
-    words.push("\n");
-    blanks.push(false);
-    typed.push("");
-    locked.push(false);
+    words.push("\n"); blanks.push(false); typed.push(""); locked.push(false);
   });
-  // set current index to first blank
-  currentIdx = blanks.findIndex(b=>b);
-  if(currentIdx === -1) currentIdx = 0;
-  revealPointer = 0;
+  currentIdx = blanks.findIndex(b=>b); if(currentIdx===-1) currentIdx=0;
+  revealPointer=0;
   render();
+  localStorage.setItem(LAST_VERSE_KEY, JSON.stringify(verseArray));
 }
+
 function render(){
   const container = document.getElementById("verse-container");
   container.innerHTML = words.map((w,i)=>{
     if(blanks[i]){
       if(locked[i]){
-        const correct = words[i] || "";
-        const input = typed[i] || "";
-        let out = "";
+        const correct = words[i]||""; const input = typed[i]||""; let out="";
         const maxlen = Math.max(input.length, correct.length);
         for(let j=0;j<maxlen;j++){
-          const cInput = input[j] ?? "";
-          const cCorrect = correct[j] ?? "";
-          if (j < input.length){
-            if (cInput === cCorrect) out += `<span class="correct">${escapeHTML(cInput)}</span>`;
-            else out += `<span class="wrong">${escapeHTML(cInput)}</span>`;
-          } else {
-            out += `<span class="missing">${escapeHTML(cCorrect)}</span>`;
-          }
+          const cInput = input[j]??""; const cCorrect = correct[j]??"";
+          if(j<input.length) out += (cInput===cCorrect?`<span class="correct">${escapeHTML(cInput)}</span>`:`<span class="wrong">${escapeHTML(cInput)}</span>`);
+          else out += `<span class="missing">${escapeHTML(cCorrect)}</span>`;
         }
-        return `<span class="blank ${i===currentIdx? 'current' : ''}" id="word-${i}">${out}</span>`;
+        return `<span class="blank ${i===currentIdx?'current':''}" id="word-${i}">${out}</span>`;
       } else {
-        const display = typed[i] || "";
-        const rest = "_".repeat(Math.max(1, (words[i]||"").length - display.length));
-        return `<span class="blank ${i===currentIdx? 'current' : ''}" id="word-${i}">${escapeHTML(display)}${rest}</span>`;
+        const display = typed[i]||""; const rest = "_".repeat(Math.max(1,(words[i]||"").length-display.length));
+        return `<span class="blank ${i===currentIdx?'current':''}" id="word-${i}">${escapeHTML(display)}${rest}</span>`;
       }
     } else {
-      if(w === "\n") return "<br/>";
-      return `<span class="mx-1">${escapeHTML(w)}</span>`;
+      if(w==="\n") return "<br/>"; return `<span class="mx-1">${escapeHTML(w)}</span>`;
     }
   }).join("");
-
-  // focus input only if input mode enabled
-  if(document.getElementById("toggle-input")?.checked){
-    const inputEl = document.getElementById("input");
-    inputEl.focus();
-  }
-
-  // auto-scroll current word into view
+  if(document.getElementById("toggle-input")?.checked) document.getElementById("input").focus();
   const currentEl = document.getElementById(`word-${currentIdx}`);
-  if(currentEl){
-    currentEl.scrollIntoView({behavior:"smooth", block:"center"});
-  }
+  if(currentEl) currentEl.scrollIntoView({behavior:"smooth", block:"center"});
 }
 
-// Reveal button scroll support
+/* -------------------- Reveal -------------------- */
 document.getElementById("reveal").addEventListener("click", ()=>{
-  revealNext(); // your reveal logic
-  render();
+  const idx = blanks.findIndex((b,i)=>i>=revealPointer && b);
+  if(idx>=0){
+    typed[idx]=words[idx]; locked[idx]=true; revealPointer=idx+1;
+    if(idx===currentIdx) moveToNextBlank();
+    render();
+  }
 });
+
 /* -------------------- Input mode toggle -------------------- */
 document.getElementById("toggle-input").addEventListener("change", e=>{
   const inputBox = document.getElementById("input");
+  const revealBtn = document.getElementById("reveal");
   if(e.target.checked){
     inputBox.style.display = "block";
-    render();
+    revealBtn.style.flexGrow = "0";  // normal size
   } else {
     inputBox.style.display = "none";
+    revealBtn.style.flexGrow = "1";  // stretch to fill sticky region
   }
+  render();
 });
-
 /* -------------------- Navigation -------------------- */
 function moveToNextBlank(){
   if(currentIdx<0) return;
-  // mark current as locked before moving (if it's a blank and not already locked)
-  if(blanks[currentIdx]) locked[currentIdx] = true;
-  currentIdx = blanks.findIndex((b,i)=>b && i>currentIdx);
-  if(currentIdx === -1) currentIdx = blanks.findIndex(b=>b); // keep somewhere
+  if(blanks[currentIdx]) locked[currentIdx]=true;
+  currentIdx=blanks.findIndex((b,i)=>b && i>currentIdx);
+  if(currentIdx===-1) currentIdx=blanks.findIndex(b=>b);
 }
 
-/* -------------------- Reveal behaviour -------------------- */
-document.getElementById("reveal").addEventListener("click", ()=>{
-  const idx = blanks.findIndex((b,i)=>i>=revealPointer && b);
-  if(idx >= 0){
-    typed[idx] = words[idx];
-    locked[idx] = true;
-    revealPointer = idx+1;
-    // if reveal advanced over current blank, we step currentIdx to next blank
-    if(idx === currentIdx) moveToNextBlank();
-    render();
-  }
-});
-
-/* -------------------- Input handling (typing/locking) -------------------- */
+/* -------------------- Input handling -------------------- */
 document.getElementById("input").addEventListener("input", e=>{
   if(currentIdx<0 || !blanks[currentIdx]) return;
   typed[currentIdx] = e.target.value;
-  // while typing, do NOT color — render shows plain display for unlocked words
   render();
 });
-
 document.getElementById("input").addEventListener("keydown", e=>{
-  if(currentIdx<0) return;
-  if(!blanks[currentIdx]) return;
-  if(e.key === " " || e.key === "Enter"){
-    // lock current token and move to next blank
-    typed[currentIdx] = e.target.value.trim();
-    locked[currentIdx] = true;
+  if(currentIdx<0||!blanks[currentIdx]) return;
+  if(e.key===" "||e.key==="Enter"){
+    typed[currentIdx]=e.target.value.trim(); locked[currentIdx]=true;
     moveToNextBlank();
-    e.target.value = "";
+    e.target.value="";
     render();
     e.preventDefault();
   }
 });
 
 /* -------------------- Restart -------------------- */
-document.getElementById("restart").addEventListener("click", ()=>{
-  if(currentVerseArray) initBlanks(currentVerseArray);
-});
+document.getElementById("restart").addEventListener("click", ()=>{ if(currentVerseArray)initBlanks(currentVerseArray); });
 
-/* -------------------- Load verse (Bible) -------------------- */
+/* -------------------- Load verse -------------------- */
 document.getElementById("load-verse").addEventListener("click", ()=>{
   const ref = document.getElementById("verse-input").value.trim();
-  if(!bible || Object.keys(bible).length===0){
-    alert("Bible není načtena.");
-    return;
-  }
-  const verses = parseReference(ref);
-  if(verses && verses.length>0){
-    initBlanks(verses);
-  }
+  if(!bible||Object.keys(bible).length===0){ alert("Bible není načtena."); return; }
+  const verses=parseReference(ref);
+  if(verses&&verses.length>0)initBlanks(verses);
 });
 
-/* -------------------- Custom texts: save/edit/delete/list -------------------- */
+/* -------------------- Custom texts -------------------- */
 function loadSavedTexts(){
-  const saved = JSON.parse(localStorage.getItem("customTexts")||"[]");
-  const container = document.getElementById("saved-texts");
-  container.innerHTML = "";
+  const saved=JSON.parse(localStorage.getItem("customTexts")||"[]");
+  const container=document.getElementById("saved-texts");
+  container.innerHTML="";
   saved.forEach((t,i)=>{
-    const row = document.createElement("div");
-    row.className = "flex items-center space-x-2";
-
-    const btn = document.createElement("button");
-    btn.textContent = t.title;
-    btn.className = "bg-gray-600 flex-grow text-white px-2 py-1 rounded hover:bg-gray-500 text-left";
-    btn.onclick = ()=>{ initBlanks([t.text]); };
-
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "✏";
-    editBtn.className = "bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600";
-    editBtn.onclick = ()=>{
-      document.getElementById("custom-title").value = t.title;
-      document.getElementById("custom-text").value = t.text;
-      editingIndex = i;
-    };
-
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "❌";
-    delBtn.className = "bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600";
-    delBtn.onclick = ()=>{
-      saved.splice(i,1);
-      localStorage.setItem("customTexts", JSON.stringify(saved));
-      loadSavedTexts();
-    };
-
-    row.appendChild(btn);
-    row.appendChild(editBtn);
-    row.appendChild(delBtn);
+    const row=document.createElement("div"); row.className="flex items-center space-x-2";
+    const btn=document.createElement("button"); btn.textContent=t.title;
+    btn.className="bg-gray-600 flex-grow text-white px-2 py-1 rounded hover:bg-gray-500 text-left";
+    btn.onclick=()=>{initBlanks([t.text]);};
+    const editBtn=document.createElement("button"); editBtn.textContent="✏"; editBtn.className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600";
+    editBtn.onclick=()=>{ document.getElementById("custom-title").value=t.title; document.getElementById("custom-text").value=t.text; editingIndex=i; };
+    const delBtn=document.createElement("button"); delBtn.textContent="❌"; delBtn.className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600";
+    delBtn.onclick=()=>{ saved.splice(i,1); localStorage.setItem("customTexts",JSON.stringify(saved)); loadSavedTexts(); };
+    row.appendChild(btn); row.appendChild(editBtn); row.appendChild(delBtn);
     container.appendChild(row);
   });
 }
-
 document.getElementById("save-text").addEventListener("click", ()=>{
-  const title = document.getElementById("custom-title").value.trim();
-  const text = document.getElementById("custom-text").value;
-  if(!title || !text){ alert("Vyplň název i text!"); return; }
-  let saved = JSON.parse(localStorage.getItem("customTexts")||"[]");
-
-  if(editingIndex !== null){
-    saved[editingIndex] = {title, text};
-    editingIndex = null;
-  } else {
-    saved.push({title, text});
-  }
-  localStorage.setItem("customTexts", JSON.stringify(saved));
-  document.getElementById("custom-title").value = "";
-  document.getElementById("custom-text").value = "";
+  const title=document.getElementById("custom-title").value.trim();
+  const text=document.getElementById("custom-text").value;
+  if(!title||!text){ alert("Vyplň název i text!"); return; }
+  let saved=JSON.parse(localStorage.getItem("customTexts")||"[]");
+  if(editingIndex!==null){ saved[editingIndex]={title,text}; editingIndex=null; } else { saved.push({title,text}); }
+  localStorage.setItem("customTexts",JSON.stringify(saved));
+  document.getElementById("custom-title").value=""; document.getElementById("custom-text").value="";
   loadSavedTexts();
 });
-
 document.getElementById("clear-edit").addEventListener("click", ()=>{
-  editingIndex = null;
-  document.getElementById("custom-title").value = "";
-  document.getElementById("custom-text").value = "";
+  editingIndex=null; document.getElementById("custom-title").value=""; document.getElementById("custom-text").value="";
 });
+document.getElementById("toggle-texts").addEventListener("click", ()=>{ document.getElementById("custom-section").classList.toggle("hidden"); });
+document.getElementById("difficulty").addEventListener("change", e=>{ difficulty=parseInt(e.target.value); });
 
-/* -------------------- Collapsible custom texts -------------------- */
-document.getElementById("toggle-texts").addEventListener("click", ()=>{
-  const section = document.getElementById("custom-section");
-  section.classList.toggle("hidden");
-});
-
-/* -------------------- Difficulty change -------------------- */
-document.getElementById("difficulty").addEventListener("change", e=>{
-  difficulty = parseInt(e.target.value);
-});
-
-/* -------------------- Init on load -------------------- */
+/* -------------------- Menu switching -------------------- */
+function switchApp(app){
+  document.querySelectorAll("#app-menu button").forEach(b=>b.classList.remove("active"));
+  document.querySelector(`#app-menu button[data-app='${app}']`)?.classList.add("active");
+  document.getElementById("byheart-container").style.display = app==="byheart"?"block":"none";
+  document.getElementById("sealed-container").style.display = app==="sealed"?"block":"none";
+  localStorage.setItem(LAST_APP_KEY, app);
+}
+document.querySelectorAll("#app-menu button").forEach(b=>{
+  b.addEventListener("click",()=>{ switchApp(b.dataset.app); });
+})
+;/* -------------------- Init on load -------------------- */
 loadBible();
 loadSavedTexts();
 
-/* --- your existing JS unchanged --- */
+// Restore last verse/text if exists
+const lastVerse = localStorage.getItem(LAST_VERSE_KEY);
+if(lastVerse) initBlanks(JSON.parse(lastVerse));
+
+// Restore last app
+const lastApp = localStorage.getItem(LAST_APP_KEY) || "byheart";
+switchApp(lastApp);
 </script>
 </body>
 </html>
+

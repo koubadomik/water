@@ -1,0 +1,55 @@
+body { background-color: #1f2937; color: #e5e7eb; }
+.blank { border-bottom: 2px solid gray; padding: 0 4px; min-width: 20px; display: inline-block; }
+.correct { color: #10b981; }
+.wrong   { color: #ef4444; }
+.missing { color: #fbbf24; }
+.current { background-color: #374151; padding: 2px 4px; border-radius: 2px; }
+textarea { white-space: pre-wrap; }
+
+#reveal { font-size: 1.25rem; padding: 1rem; }
+
+.reveal-container {
+  position: sticky;
+  bottom: 0;
+  background: #1f2937;
+  padding-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  h1 { font-size: 1.5rem; }
+  #verse-container { font-size: 1.5rem; line-height: 2.2rem; }
+  input, button, select, textarea { font-size: 1.1rem !important; }
+  #reveal { font-size: 1.5rem; padding: 1.25rem; }
+}
+@media (max-width: 480px) {
+  #verse-container { font-size: 1.7rem; line-height: 2.4rem; }
+  input, button, select, textarea { font-size: 1.2rem !important; }
+  #reveal { font-size: 1.7rem; padding: 1.5rem; }
+}
+
+#sticky-controls {
+  z-index: 50;
+  border-top: 1px solid #444;
+}
+
+#input:disabled, #input[style*="display: none"] + #reveal {
+  flex-grow: 1;
+}
+
+.blank.current {
+  background: rgba(255,255,0,0.2);
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+#app-menu {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+#app-menu button.active {
+  background-color: #2563eb;
+  color: white;
+}
+

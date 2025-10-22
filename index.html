@@ -60,10 +60,15 @@
     </select>
     <button id="restart" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Restart</button>
 
-    <label class="flex items-center gap-1 text-sm ml-2">
-      <input type="checkbox" id="toggle-input" checked />
-      Input mode
-    </label>
+<label class="flex items-center gap-1 text-sm ml-2">
+  <input type="checkbox" id="toggle-input" checked />
+  Input mode
+</label>
+
+<label class="flex items-center gap-1 text-sm ml-2">
+  <input type="checkbox" id="toggle-audio" />
+  Audio mode
+</label>
   </div>
 
   <!-- Verse/Text display -->
@@ -76,6 +81,12 @@
          class="flex-grow border p-2 rounded text-lg text-black"/>
   <button id="reveal" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 text-lg flex-shrink-0">Reveal</button>
 </div>
+<div id="audio-controls" class="fixed bottom-4 left-0 w-full bg-gray-800 p-3 flex items-center justify-center gap-4 hidden">
+  <button id="play-audio" class="bg-green-500 text-white px-4 py-2 rounded text-lg hover:bg-green-600">▶️ Play</button>
+  <button id="repeat-audio" class="bg-blue-500 text-white px-4 py-2 rounded text-lg hover:bg-blue-600">🔁 Repeat</button>
+</div>
+
+
 
 <script src="script.js"></script>
 </body>

@@ -230,3 +230,112 @@ if(lastVerse) initBlanks(JSON.parse(lastVerse));
 const lastApp = localStorage.getItem(LAST_APP_KEY) || "byheart";
 switchApp(lastApp);
 
+/* -------------------- Audio Mode (karaoke, no stop button) -------------------- */
+const audioControls = document.getElementById("audio-controls");
+const inputControls = document.getElementById("sticky-controls");
+const toggleAudio = document.getElementById("toggle-audio");
+
+let currentUtterance = null;
+let isPaused = false;
+let pausedCharIndex = 0;
+let fullText = "";
+const playBtn = document.getElementById("play-audio");
+
+function getCurrentText() {
+  if (!currentVerseArray) return "";
+  return currentVerseArray.join(" ");
+}
+
+function renderHighlightedText(index) {
+  const container = document.getElementById("verse-container");
+  const before = escapeHTML(fullText.substring(0, index));
+  const after = escapeHTML(fullText.substring(index));
+  const firstWord = after.split(/\s+/)[0] || "";
+  container.innerHTML =
+    before +
+    `<span class="karaoke-current">${escapeHTML(firstWord)}</span>` +
+    escapeHTML(after.substring(firstWord.length));
+  const currentEl = document.querySelector(".karaoke-current");
+  if (currentEl) currentEl.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function startSpeech(startIndex = 0) {
+  stopAudio();
+  fullText = getCurrentText();
+  if (!fullText) return;
+
+  const textToRead = fullText.substring(startIndex);
+  const utterance = new SpeechSynthesisUtterance(textToRead);
+  utterance.lang = "cs-CZ";
+
+  utterance.onboundary = (event) => {
+    if (event.name === "word" || event.name === undefined) {
+      const absIndex = startIndex + event.charIndex;
+      pausedCharIndex = absIndex;
+      renderHighlightedText(absIndex);
+    }
+  };
+
+  utterance.onend = () => {
+    isPaused = false;
+    pausedCharIndex = 0;
+    playBtn.textContent = "▶️ Play";
+  };
+
+  speechSynthesis.speak(utterance);
+  currentUtterance = utterance;
+  isPaused = false;
+  playBtn.textContent = "⏸️ Pause";
+}
+
+function stopAudio() {
+  speechSynthesis.cancel();
+  currentUtterance = null;
+  isPaused = false;
+  pausedCharIndex = 0;
+  document.getElementById("verse-container").innerHTML = escapeHTML(getCurrentText());
+  playBtn.textContent = "▶️ Play";
+}
+
+function pauseAudio() {
+  speechSynthesis.pause();
+  isPaused = true;
+  playBtn.textContent = "▶️ Play";
+}
+
+function resumeAudio() {
+  speechSynthesis.resume();
+  isPaused = false;
+  playBtn.textContent = "⏸️ Pause";
+}
+
+/* -------------------- Button handlers -------------------- */
+playBtn.addEventListener("click", () => {
+  if (speechSynthesis.speaking && !isPaused) {
+    pauseAudio();
+  } else if (isPaused) {
+    resumeAudio();
+  } else {
+    startSpeech(pausedCharIndex);
+  }
+});
+
+document.getElementById("repeat-audio").addEventListener("click", () => {
+  startSpeech(0);
+});
+
+/* toggle input vs audio mode */
+toggleAudio.addEventListener("change", (e) => {
+  const isAudio = e.target.checked;
+  if (isAudio) {
+    document.getElementById("toggle-input").checked = false;
+    inputControls.classList.add("hidden");
+    audioControls.classList.remove("hidden");
+    stopAudio();
+  } else {
+    audioControls.classList.add("hidden");
+    inputControls.classList.remove("hidden");
+    stopAudio();
+  }
+});
+

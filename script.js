@@ -267,6 +267,9 @@ function startSpeech(startIndex = 0) {
   const textToRead = fullText.substring(startIndex);
   const utterance = new SpeechSynthesisUtterance(textToRead);
   utterance.lang = "cs-CZ";
+  utterance.pitch = 0.3;
+  utterance.rate  = 0.95;
+  utterance.volume = 1;
 
   utterance.onboundary = (event) => {
     if (event.name === "word" || event.name === undefined) {

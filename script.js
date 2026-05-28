@@ -287,14 +287,44 @@ document.getElementById("difficulty").addEventListener("change", e => {
     difficulty = parseInt(e.target.value);
 });
 
-/* -------------------- Menu switching -------------------- */
+/* -------------------- Menu switching (show/hide typing area) -------------------- */
 function switchApp(app) {
+    // highlight menu
     document.querySelectorAll("#app-menu button").forEach(b => b.classList.remove("active"));
     document.querySelector(`#app-menu button[data-app='${app}']`)?.classList.add("active");
+
+    // show/hide primary app containers
     document.getElementById("byheart-container").style.display = app === "byheart" ? "block" : "none";
+    // palace container may or may not exist depending on your setup
+    const palace = document.getElementById("palace-container");
+    if (palace) palace.style.display = app === "palace" ? "block" : "none";
+
+    // persist last app
     localStorage.setItem(LAST_APP_KEY, app);
+
+    // hide typing area + reveal button when in ByHeart,
+    // show it for other apps (sticky-controls is a flex container)
+    const sticky = document.getElementById("sticky-controls");
+    const inputEl = document.getElementById("input");
+    const revealBtn = document.getElementById("reveal");
+    if (sticky) {
+        sticky.style.display = (app === "byheart") ? "flex" : "none";
+    } else {
+        // fallback: hide input & reveal individually if sticky container is missing
+        sticky.style.display = (app === "byheart") ? "none" : "flex";
+        // if (inputEl) inputEl.style.display = (app === "byheart") ? "block" : "none";
+        // if (revealBtn) revealBtn.style.display = (app === "byheart") ? "none" : "inline-block";
+    }
+
+    // initialize memory palace when opening it
+    if (app === "palace" && window.initMemoryPalace) {
+        window.initMemoryPalace();
+    } else if (app !== "palace" && window.hideMemoryPalaceClearBtn) {
+        window.hideMemoryPalaceClearBtn();
+    }
 }
 
+// wire up menu buttons
 document.querySelectorAll("#app-menu button").forEach(b => {
     b.addEventListener("click", () => {
         if (b.dataset.app) switchApp(b.dataset.app);

@@ -94,8 +94,13 @@
         html += '<input type="file" id="palace-import-file" accept=".json" style="display:none;"/>';
         html += '</div>';
 
+        // Search box
+        html += '<div style="margin-bottom:16px;">';
+        html += '<input type="text" id="palace-book-search" placeholder="Search books..." style="width:100%;padding:10px;border-radius:6px;border:1px solid #444;background:#0b1220;color:#fff;font-size:14px;box-sizing:border-box;"/>';
+        html += '</div>';
+
         html += '<h3 style="color:#cbd5e1;margin:0 0 12px 0;font-size:16px;">📚 Select Book</h3>';
-        html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;">';
+        html += '<div id="palace-book-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;">';
 
         books.forEach(book => {
             const ch = getChapterCount(book);
@@ -106,6 +111,19 @@
 
         html += '</div></div>';
         content.innerHTML = html;
+
+        // Wire up Search
+        const searchInput = document.getElementById('palace-book-search');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                document.querySelectorAll('.palace-book').forEach(btn => {
+                    const bookName = btn.dataset.book.toLowerCase();
+                    btn.style.display = bookName.includes(term) ? 'block' : 'none';
+                });
+            });
+        }
 
         // Wire up Import/Export
         const exportBtn = document.getElementById('palace-export');
@@ -170,26 +188,31 @@
         const notes = (data[key] || {});
 
         let html = '<div style="padding:12px;max-width:100%;">';
-        html += `<button class="palace-back" style="padding:6px 10px;background:#555;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;margin-bottom:12px;">← Back</button>`;
-        html += `<h2 style="color:#fff;margin:0 0 16px 0;font-size:18px;">${esc(book)} ${ch + 1}</h2>`;
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <button class="palace-back" style="padding:6px 12px;background:#555;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;">← Back</button>
+            <h2 style="color:#fff;margin:0;font-size:18px;">${esc(book)} ${ch + 1}</h2>
+            <button class="palace-save-all" style="padding:6px 12px;background:#059669;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Save All</button>
+        </div>`;
 
         if (!verses || verses.length === 0) {
             html += `<div style="color:#cbd5e1;">No verses found for this chapter.</div>`;
         } else {
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(350px, 1fr));gap:12px;">';
             verses.forEach((verse, vi) => {
                 const note = notes[vi] || '';
                 const hasNote = note ? ' 📌' : '';
                 html += `
-          <div style="background:#1f2937;border:1px solid #444;border-radius:4px;padding:12px;margin-bottom:12px;">
+          <div style="background:#1f2937;border:1px solid #444;border-radius:4px;padding:12px;display:flex;flex-direction:column;">
             <div style="color:#fbbf24;font-weight:600;font-size:13px;margin-bottom:6px;">${ch + 1}:${vi + 1}${hasNote}</div>
-            <div style="color:#e5e7eb;font-size:13px;line-height:1.6;margin-bottom:10px;">${esc(verse)}</div>
-            <textarea class="palace-note-input" data-vi="${vi}" placeholder="Add note..." style="width:100%;padding:8px;border:1px solid #333;border-radius:3px;background:#0b1220;color:#e5e7eb;font-size:12px;min-height:60px;box-sizing:border-box;font-family:Arial,sans-serif;resize:vertical;"></textarea>
+            <div style="color:#e5e7eb;font-size:13px;line-height:1.5;margin-bottom:10px;flex-grow:1;">${esc(verse)}</div>
+            <textarea class="palace-note-input" data-vi="${vi}" placeholder="Add note..." style="width:100%;padding:8px;border:1px solid #333;border-radius:3px;background:#0b1220;color:#e5e7eb;font-size:12px;min-height:50px;box-sizing:border-box;font-family:Arial,sans-serif;resize:vertical;"></textarea>
           </div>
         `;
             });
+            html += '</div>';
         }
 
-        html += `<button class="palace-save-all" style="padding:10px 16px;background:#059669;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;width:100%;margin-bottom:20px;">Save Notes</button>`;
+        html += `<button class="palace-save-all" style="padding:12px 16px;background:#059669;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;width:100%;margin:20px 0 40px 0;">Save All Notes</button>`;
         html += '</div>';
 
         content.innerHTML = html;
@@ -203,9 +226,8 @@
         const backBtn = document.querySelector('.palace-back');
         if (backBtn) backBtn.addEventListener('click', () => showChapters(book));
 
-        const saveBtn = document.querySelector('.palace-save-all');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => {
+        document.querySelectorAll('.palace-save-all').forEach(btn => {
+            btn.addEventListener('click', () => {
                 const data = load();
                 const key = `${book}_${ch}`;
                 const notesObj = {};
@@ -222,13 +244,22 @@
                     delete data[key];
                 }
                 save(data);
-                // small confirmation (non-blocking)
-                saveBtn.textContent = 'Saved ✓';
-                setTimeout(() => {
-                    saveBtn.textContent = 'Save Notes';
-                }, 1000);
+                
+                // update indicators (📌)
+                showChapter(book, ch);
+                
+                // small confirmation
+                const feedbackBtn = document.querySelector('.palace-save-all:last-of-type');
+                if (feedbackBtn) {
+                    feedbackBtn.textContent = 'Saved ✓';
+                    feedbackBtn.style.background = '#10b981';
+                    setTimeout(() => {
+                        feedbackBtn.textContent = 'Save All Notes';
+                        feedbackBtn.style.background = '#059669';
+                    }, 1000);
+                }
             });
-        }
+        });
     }
 
     // exported init for switchApp to call

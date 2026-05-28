@@ -85,7 +85,16 @@
         _retryCount = 0;
 
         let html = '<div style="padding:12px;max-width:100%;">';
-        html += '<h2 style="color:#fff;margin:0 0 16px 0;font-size:20px;">📚 Select Book</h2>';
+        html += '<h2 style="color:#fff;margin:0 0 16px 0;font-size:20px;">🏛️ Memory Palace</h2>';
+
+        // Import/Export buttons
+        html += '<div style="margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap;">';
+        html += '<button id="palace-export" style="padding:8px 12px;background:#4b5563;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">📤 Export JSON</button>';
+        html += '<button id="palace-import-trigger" style="padding:8px 12px;background:#4b5563;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">📥 Import JSON</button>';
+        html += '<input type="file" id="palace-import-file" accept=".json" style="display:none;"/>';
+        html += '</div>';
+
+        html += '<h3 style="color:#cbd5e1;margin:0 0 12px 0;font-size:16px;">📚 Select Book</h3>';
         html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;">';
 
         books.forEach(book => {
@@ -97,6 +106,17 @@
 
         html += '</div></div>';
         content.innerHTML = html;
+
+        // Wire up Import/Export
+        const exportBtn = document.getElementById('palace-export');
+        if (exportBtn) exportBtn.addEventListener('click', exportData);
+
+        const importTrigger = document.getElementById('palace-import-trigger');
+        const importFile = document.getElementById('palace-import-file');
+        if (importTrigger && importFile) {
+            importTrigger.addEventListener('click', () => importFile.click());
+            importFile.addEventListener('change', importData);
+        }
 
         document.querySelectorAll('.palace-book').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -218,6 +238,41 @@
         if (palace) palace.style.display = 'block';
         showBooks();
     };
+
+    function exportData() {
+        const data = load();
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'memory-palace-notes.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function importData(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            try {
+                const importedData = JSON.parse(event.target.result);
+                if (confirm('This will merge imported notes with your current notes. Continue?')) {
+                    const currentData = load();
+                    const mergedData = {...currentData, ...importedData};
+                    save(mergedData);
+                    alert('Import successful!');
+                    showBooks();
+                }
+            } catch (err) {
+                alert('Error importing JSON: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
 
     window.hideMemoryPalace = function () {
         const palace = document.getElementById('palace-container');

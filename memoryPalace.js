@@ -188,10 +188,15 @@
         const notes = (data[key] || {});
 
         let html = '<div style="padding:12px;max-width:100%;">';
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <button class="palace-back" style="padding:6px 12px;background:#555;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;">← Back</button>
-            <h2 style="color:#fff;margin:0;font-size:18px;">${esc(book)} ${ch + 1}</h2>
-            <button class="palace-save-all" style="padding:6px 12px;background:#059669;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Save All</button>
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="palace-back" style="padding:6px 12px;background:#555;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;">← Back</button>
+                <h2 style="color:#fff;margin:0;font-size:18px;">${esc(book)} ${ch + 1}</h2>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button id="palace-view-visual" style="padding:6px 12px;background:#3b82f6;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">👀 Visual Mode</button>
+                <button class="palace-save-all" style="padding:6px 12px;background:#059669;color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;">Save All</button>
+            </div>
         </div>`;
 
         if (!verses || verses.length === 0) {
@@ -225,6 +230,9 @@
 
         const backBtn = document.querySelector('.palace-back');
         if (backBtn) backBtn.addEventListener('click', () => showChapters(book));
+
+        const visualBtn = document.getElementById('palace-view-visual');
+        if (visualBtn) visualBtn.addEventListener('click', () => showChapterVisual(book, ch));
 
         document.querySelectorAll('.palace-save-all').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -260,6 +268,140 @@
                 }
             });
         });
+    }
+
+    // Flashcard "Going Over" Mode
+    function showChapterVisual(book, ch) {
+        const content = document.getElementById('palace-content');
+        if (!content) return;
+
+        const verses = getVerses(book, ch);
+        const data = load();
+        const key = `${book}_${ch}`;
+        const notes = (data[key] || {});
+
+        let currentIndex = 0;
+
+        function renderCard() {
+            const verse = verses[currentIndex];
+            const note = notes[currentIndex] || '(No note for this verse)';
+
+            let html = '<div style="padding:12px;max-width:600px;margin:0 auto;display:flex;flex-direction:column;min-height:80vh;justify-content:center;">';
+            
+            // Header
+            html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:8px;">
+                <button id="palace-visual-back" style="padding:6px 12px;background:#555;color:#fff;border:none;border-radius:3px;cursor:pointer;font-size:12px;">← Back</button>
+                <h2 style="color:#fff;margin:0;font-size:18px;">${esc(book)} ${ch + 1}:${currentIndex + 1}</h2>
+                <div style="color:#94a3b8;font-size:12px;">${currentIndex + 1} / ${verses.length}</div>
+            </div>`;
+
+            // Flashcard Container
+            html += `
+            <div id="palace-flashcard-scene" style="perspective: 1000px; cursor: pointer; flex-grow: 1; display: flex; align-items: stretch; margin-bottom: 24px;">
+                <div id="palace-flashcard" style="position: relative; width: 100%; transition: transform 0.6s; transform-style: preserve-3d; min-height: 300px; display: flex;">
+                    
+                    <!-- Front (Note) -->
+                    <div style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #1e293b; border: 2px solid #3b82f6; border-radius: 12px; padding: 32px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                        <div style="color: #3b82f6; font-size: 14px; font-weight: 700; margin-bottom: 12px; text-transform: uppercase;">Note (Front)</div>
+                        <div style="color: #cbd5e1; font-size: 22px; line-height: 1.6; text-align: center; white-space: pre-wrap;">${esc(note)}</div>
+                        <div style="margin-top: 32px; color: #64748b; font-size: 12px; text-align: center;">(Tap to reveal verse)</div>
+                    </div>
+
+                    <!-- Back (Verse) -->
+                    <div style="position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: #1e293b; border: 2px solid #10b981; border-radius: 12px; padding: 32px; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; transform: rotateY(180deg); box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                        <div style="color: #10b981; font-size: 14px; font-weight: 700; margin-bottom: 12px; text-transform: uppercase;">Verse (Back)</div>
+                        <div style="color: #f8fafc; font-size: 22px; line-height: 1.6; text-align: center;">${esc(verse)}</div>
+                        <div style="margin-top: 32px; color: #64748b; font-size: 12px; text-align: center;">(Tap to flip back)</div>
+                    </div>
+
+                </div>
+            </div>`;
+
+            // Navigation
+            html += `
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button id="palace-flash-prev" style="flex:1;padding:12px;background:#334155;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;" ${currentIndex === 0 ? 'disabled style="opacity:0.3;cursor:default;"' : ''}>← Previous</button>
+                <button id="palace-flash-next" style="flex:1;padding:12px;background:#334155;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;" ${currentIndex === verses.length - 1 ? 'disabled style="opacity:0.3;cursor:default;"' : ''}>Next →</button>
+            </div>
+            <div style="text-align:center;margin-top:16px;color:#64748b;font-size:12px;">Tip: Swipe left/right or use arrow keys to navigate</div>
+            `;
+
+            html += '</div>';
+            content.innerHTML = html;
+
+            // Flip Logic
+            const card = document.getElementById('palace-flashcard');
+            let flipped = false;
+            document.getElementById('palace-flashcard-scene').addEventListener('click', () => {
+                flipped = !flipped;
+                card.style.transform = flipped ? 'rotateY(180deg)' : 'rotateY(0)';
+            });
+
+            // Nav Logic
+            document.getElementById('palace-flash-prev').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    renderCard();
+                }
+            });
+            document.getElementById('palace-flash-next').addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (currentIndex < verses.length - 1) {
+                    currentIndex++;
+                    renderCard();
+                }
+            });
+
+            document.getElementById('palace-visual-back').addEventListener('click', () => showChapter(book, ch));
+
+            // Swipe support
+            let touchStartX = 0;
+            const scene = document.getElementById('palace-flashcard-scene');
+            scene.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, {passive: true});
+            scene.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                const diff = touchEndX - touchStartX;
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0 && currentIndex > 0) {
+                        currentIndex--;
+                        renderCard();
+                    } else if (diff < 0 && currentIndex < verses.length - 1) {
+                        currentIndex++;
+                        renderCard();
+                    }
+                }
+            }, {passive: true});
+        }
+
+        renderCard();
+
+        // Keyboard support
+        const keyHandler = (e) => {
+            if (!document.getElementById('palace-flashcard')) {
+                window.removeEventListener('keydown', keyHandler);
+                return;
+            }
+            if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                currentIndex--;
+                renderCard();
+            } else if (e.key === 'ArrowRight' && currentIndex < verses.length - 1) {
+                currentIndex++;
+                renderCard();
+            } else if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                const card = document.getElementById('palace-flashcard');
+                if (card) {
+                    const isFlipped = card.style.transform === 'rotateY(180deg)';
+                    card.style.transform = isFlipped ? 'rotateY(0)' : 'rotateY(180deg)';
+                }
+            } else if (e.key === 'Escape') {
+                showChapter(book, ch);
+            }
+        };
+        window.addEventListener('keydown', keyHandler);
     }
 
     // exported init for switchApp to call

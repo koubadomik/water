@@ -65,3 +65,36 @@ textarea { white-space: pre-wrap; }
   transition: background-color 0.1s ease;
 }
 
+/* Drill mode styles: START */
+#drill-modal-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 12px; }
+#drill-modal-overlay.drill-hidden { display: none; }
+#drill-modal { width: 100%; max-width: 900px; background: #111827; color: #e5e7eb; border-radius: 10px; padding: 1rem; box-shadow: 0 8px 24px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.04); max-height: 95vh; overflow:auto; -webkit-overflow-scrolling: touch; }
+.drill-header { display:flex; align-items:center; gap:1rem; justify-content:space-between; }
+.drill-header h3 { margin:0; font-size:1.1rem; }
+.drill-header button { background: transparent; color: #e5e7eb; border: none; font-size:1.1rem; cursor:pointer; padding: 6px; }
+.drill-controls { display:flex; gap:0.5rem; margin-top:0.5rem; }
+.drill-controls input { flex:1; padding:0.5rem; border-radius:6px; border:1px solid #333; background:#0b1220; color:#e5e7eb; }
+.drill-controls button { padding:0.5rem 0.75rem; border-radius:6px; }
+#drill-current-info { margin-top:0.6rem; background: rgba(255,255,255,0.02); padding:0.5rem; border-radius:6px; }
+.drill-progress { font-weight:600; margin-bottom:0.25rem; color:#cbd5e1; }
+.drill-current-verse { font-size:1rem; line-height:1.4; color:#f8fafc; }
+#drill-typing-input { width:100%; margin-top:0.75rem; padding:0.75rem; font-size:1rem; border-radius:8px; border:1px solid #333; background:#051025; color:#e5e7eb; resize:vertical; min-height:120px; }
+.drill-actions { display:flex; gap:0.5rem; align-items:center; margin-top:0.5rem; }
+.drill-actions .btn-check { background:#059669; color:white; padding:0.5rem 0.75rem; border-radius:6px; }
+.drill-options { margin-left:auto; font-size:0.9rem; display:flex; align-items:center; gap:0.3rem; color:#cbd5e1; }
+.drill-result { margin-top:0.75rem; padding:0.5rem; border-radius:6px; background:#031024; color:#e5e7eb; min-height:3rem; }
+.drill-stats { margin-top:0.5rem; display:flex; gap:1rem; color:#cbd5e1; }
+/* highlight helpers */
+.drill-word { padding:0 0.12rem; border-radius:3px; margin-right:0.12rem; display:inline-block; }
+.drill-word.correct { background:#052e14; color:#10b981; }
+.drill-word.wrong { background:#2b0508; color:#f87171; }
+.drill-char-wrong { background:#ffefef; color:#b91c1c; }
+.drill-char-insert { background:#e6f1ff; color:#0369a1; }
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  #drill-modal { padding: 0.75rem; }
+  .drill-header h3 { font-size:1rem; }
+  #drill-typing-input { min-height: 140px; font-size: 1.05rem; }
+  .drill-controls { flex-direction: column; }
+}
+/* Drill mode styles: END */

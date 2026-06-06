@@ -462,7 +462,7 @@ toggleAudio.addEventListener("change", (e) => {
     }
 
     function _normText(txt, opts) {
-        opts = opts || {ignoreCase: true, ignorePunctuation: false};
+        opts = opts || {ignoreCase: false, ignorePunctuation: false};
         let out = (txt || '').trim();
         if (opts.ignoreCase) out = out.toLowerCase();
         if (opts.ignorePunctuation) out = out.replace(/[^\w\s\u00C0-\u024F'-]+/g, '');
@@ -564,7 +564,7 @@ toggleAudio.addEventListener("change", (e) => {
     }
 
     function _renderComparisonHtml(targetText, typedText, opts) {
-        opts = opts || {ignoreCase: true, ignorePunctuation: false};
+        opts = opts || {ignoreCase: false, ignorePunctuation: false};
         const tWordsRaw = _splitWords(targetText);
         const yWordsRaw = _splitWords(typedText);
         const tNorm = tWordsRaw.map(w => _normText(w, opts));
@@ -628,8 +628,10 @@ toggleAudio.addEventListener("change", (e) => {
         const typingInput = document.getElementById('drill-typing-input');
         const checkBtn = document.getElementById('drill-check-btn');
         const retryBtn = document.getElementById('drill-retry-btn');
+        const prevBtn = document.getElementById('drill-prev-btn');
         const nextBtn = document.getElementById('drill-next-btn');
         const resultDiv = document.getElementById('drill-result');
+        const rightFormDiv = document.getElementById('drill-right-form');
         const statsDiv = document.getElementById('drill-stats');
         const accSpan = document.getElementById('drill-accuracy');
         const errSpan = document.getElementById('drill-errors');
@@ -638,7 +640,7 @@ toggleAudio.addEventListener("change", (e) => {
         const progressEl = document.getElementById('drill-progress');
 
         // restore persisted state if available
-        let state = {ref: '', index: 0, verses: []};
+        let state = {ref: '', index: 0, verses: [], isAdvancing: false};
         const persisted = _load();
         if (persisted && persisted.verses && persisted.verses.length) state = persisted;
 
@@ -674,9 +676,12 @@ toggleAudio.addEventListener("change", (e) => {
             const total = state.verses.length;
             const idx = Math.min(Math.max(0, state.index), Math.max(0, total - 1));
             progressEl.textContent = (total > 0) ? `${state.ref} | ${idx + 1} / ${total}` : '— / —';
+            prevBtn.disabled = !(total > 0 && idx > 0);
             nextBtn.disabled = !(total > 0 && idx < total - 1);
             retryBtn.disabled = false;
             resultDiv.innerHTML = '<em>Loaded. Type and press Check.</em>';
+            rightFormDiv.classList.add('drill-hidden');
+            rightFormDiv.innerHTML = '';
             statsDiv.classList.add('drill-hidden');
             typingInput.value = '';
         }
@@ -713,11 +718,31 @@ toggleAudio.addEventListener("change", (e) => {
                 return;
             }
             const typed = typingInput.value || '';
-            const opts = {ignoreCase: true, ignorePunctuation: !!ignorePunct.checked};
-            const compHtml = _renderComparisonHtml(state.verses[state.index], typed, opts);
+            const opts = {ignoreCase: false, ignorePunctuation: !!ignorePunct.checked};
+
+            // Multi-verse smart checking
+            let targetText = state.verses[state.index];
+            let currentIdx = state.index;
+            const typedLines = typed.split(/\n+/).filter(l => l.trim().length > 0);
+
+            // If user typed more than what's in current verse, try to combine subsequent verses
+            if (typedLines.length > 1 || typed.length > targetText.length * 1.2) {
+                let combinedTarget = [];
+                for (let i = state.index; i < state.verses.length; i++) {
+                    combinedTarget.push(state.verses[i]);
+                    // heuristic: if we have enough target text to cover typed text
+                    if (combinedTarget.join(' ').length >= typed.length * 0.9) break;
+                }
+                targetText = combinedTarget.join(' ');
+            }
+
+            const compHtml = _renderComparisonHtml(targetText, typed, opts);
             resultDiv.innerHTML = '<strong>Comparison:</strong><div style="margin-top:6px">' + compHtml + '</div>';
 
-            const nTarget = _normText(state.verses[state.index], opts);
+            rightFormDiv.innerHTML = '<strong>Correct form:</strong><div style="margin-top:4px">' + _escapeHtml(targetText) + '</div>';
+            rightFormDiv.classList.remove('drill-hidden');
+
+            const nTarget = _normText(targetText, opts);
             const nTyped = _normText(typed, opts);
             const lev = _levenshtein(nTarget, nTyped);
             const tWords = _splitWords(nTarget);
@@ -725,21 +750,52 @@ toggleAudio.addEventListener("change", (e) => {
             const matched = _lcsIndices(tWords, yWords).length;
             const accuracy = tWords.length ? Math.round((matched / tWords.length) * 100) : (nTarget === '' ? 100 : 0);
 
+            // Auto-advance if perfect match
+            if (accuracy === 100 && nTarget === nTyped && nTarget !== '' && !state.isAdvancing) {
+                state.isAdvancing = true; // prevent double triggers
+                setTimeout(() => {
+                    if (state.index < state.verses.length - 1) {
+                        nextBtn.click();
+                    }
+                    state.isAdvancing = false;
+                }, 1000);
+            }
+
             accSpan.textContent = 'Accuracy: ' + accuracy + '%';
             errSpan.textContent = 'Words correct: ' + matched + '/' + tWords.length;
             distSpan.textContent = 'Levenshtein: ' + lev;
             statsDiv.classList.remove('drill-hidden');
 
+            prevBtn.disabled = !(state.index > 0);
             nextBtn.disabled = !(state.index < state.verses.length - 1);
             retryBtn.disabled = false;
         });
+
+        /*
+        typingInput.addEventListener('input', function () {
+            if (state.verses && state.verses.length > 0) {
+                checkBtn.click();
+            }
+        });
+        */
 
         retryBtn.addEventListener('click', function () {
             typingInput.value = '';
             typingInput.focus();
             resultDiv.innerHTML = '<em>Retry: type again and press Check.</em>';
+            rightFormDiv.classList.add('drill-hidden');
+            rightFormDiv.innerHTML = '';
             statsDiv.classList.add('drill-hidden');
             retryBtn.disabled = true;
+        });
+
+        prevBtn.addEventListener('click', function () {
+            if (state.index > 0) {
+                state.index--;
+                _save(state);
+                _updateDisplay();
+                typingInput.focus();
+            }
         });
 
         nextBtn.addEventListener('click', function () {

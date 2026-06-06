@@ -129,8 +129,8 @@ textarea {
     padding: 12px;
 }
 
-#drill-modal-overlay.drill-hidden {
-    display: none;
+#drill-modal-overlay.drill-hidden, .drill-hidden {
+    display: none !important;
 }
 
 #drill-modal {
@@ -257,6 +257,16 @@ textarea {
     display: flex;
     gap: 1rem;
     color: #cbd5e1;
+}
+
+.drill-right-form {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    background: #064e3b;
+    color: #ecfdf5;
+    font-style: italic;
+    border-left: 4px solid #10b981;
 }
 
 /* highlight helpers */

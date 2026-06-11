@@ -352,6 +352,9 @@ function switchApp(app) {
     const palace = document.getElementById("palace-container");
     if (palace) palace.style.display = app === "palace" ? "block" : "none";
 
+    const symbolic = document.getElementById("symbolic-container");
+    if (symbolic) symbolic.style.display = app === "symbolic" ? "block" : "none";
+
     const drill = document.getElementById("drill-container");
     if (drill) drill.style.display = app === "drill" ? "block" : "none";
 
@@ -367,6 +370,11 @@ function switchApp(app) {
     // initialize memory palace when opening it
     if (app === "palace" && window.initMemoryPalace) {
         window.initMemoryPalace();
+    }
+
+    // initialize symbolic language when opening it
+    if (app === "symbolic" && window.initSymbolicLanguage) {
+        window.initSymbolicLanguage();
     }
     
     // initialize drill mode when opening it

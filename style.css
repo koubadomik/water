@@ -271,23 +271,31 @@ textarea {
 }
 
 .drill-word.correct {
-    background: #052e14;
-    color: #10b981;
+    background: #065f46;
+    color: #34d399;
+    font-weight: 500;
 }
 
 .drill-word.wrong {
-    background: #2b0508;
-    color: #f87171;
+    background: #450a0a;
+    color: #fca5a5;
+    font-weight: 500;
 }
 
 .drill-char-wrong {
-    background: #ffefef;
-    color: #b91c1c;
+    background: #991b1b;
+    color: #ffffff;
+    text-decoration: line-through;
+    padding: 0 1px;
+    border-radius: 2px;
 }
 
 .drill-char-insert {
-    background: #e6f1ff;
-    color: #0369a1;
+    background: #1e3a8a;
+    color: #ffffff;
+    text-decoration: underline;
+    padding: 0 1px;
+    border-radius: 2px;
 }
 
 /* Mobile adjustments */

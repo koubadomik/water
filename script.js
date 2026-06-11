@@ -585,8 +585,8 @@ toggleAudio.addEventListener("change", (e) => {
         parts.forEach(p => {
             const ch = p.c === ' ' ? '&nbsp;' : _escapeHtml(p.c);
             if (p.t === 'match') html += '<span>' + ch + '</span>';
-            else if (p.t === 'delete') html += '<span class="drill-char-wrong">' + ch + '</span>';
-            else if (p.t === 'insert') html += '<span class="drill-char-insert">' + ch + '</span>';
+            else if (p.t === 'delete') html += '<span class="drill-char-wrong" title="Missing">' + ch + '</span>';
+            else if (p.t === 'insert') html += '<span class="drill-char-insert" title="Extra">' + ch + '</span>';
         });
         return html;
     }
@@ -633,7 +633,11 @@ toggleAudio.addEventListener("change", (e) => {
             } else {
                 const typedGuess = yWordsRaw[typedCursor] || '';
                 span.classList.add('wrong');
-                span.innerHTML = _charDiffHtml(tRaw, typedGuess);
+                if (typedGuess) {
+                    span.innerHTML = _charDiffHtml(tRaw, typedGuess);
+                } else {
+                    span.innerHTML = '<span class="drill-char-wrong" title="Missing">' + _escapeHtml(tRaw) + '</span>';
+                }
             }
             container.appendChild(span);
             container.appendChild(document.createTextNode(' '));

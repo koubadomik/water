@@ -36,7 +36,7 @@ if (menuToggle) menuToggle.addEventListener('click', openMenu);
 if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMenu);
 
 window.updateNavStreak = function() {
-    const data = JSON.parse(localStorage.getItem('dailyRoutineData')) || {streak: 0};
+    const data = JSON.parse(localStorage.getItem('dailyRoutineData_v2')) || {streak: 0};
     const navStreak = document.getElementById('nav-streak-count');
     if (navStreak) navStreak.innerText = data.streak || 0;
 };
@@ -93,17 +93,32 @@ document.getElementById("bible-file").addEventListener("change", function (e) {
 
 /* -------------------- Verse parsing -------------------- */
 function parseReference(ref) {
+    if (!bible || Object.keys(bible).length === 0) {
+        console.warn("Bible not loaded yet.");
+        return null;
+    }
     const match = ref.match(/^(\w+)\s+(\d+)(?::(\d+)(?:-(\d+)(?::(\d+))?)?)?$/);
     if (!match) {
-        alert("Špatný formát (např. 'Zj 1:1').");
+        console.warn("Invalid reference format:", ref);
         return null;
     }
     const book = match[1], ch1 = parseInt(match[2]), v1 = match[3] ? parseInt(match[3]) : null,
         v2 = match[4] ? parseInt(match[4]) : null;
+    
+    if (!bible[book]) {
+        console.warn("Book not found:", book);
+        return null;
+    }
+
     let verses = [];
-    if (!v1) verses = bible[book]["chapters"][ch1 - 1];
-    else if (v1 && !v2) verses.push(bible[book]["chapters"][ch1 - 1][v1 - 1]);
-    else for (let i = v1 - 1; i < v2; i++) verses.push(bible[book]["chapters"][ch1 - 1][i]);
+    try {
+        if (!v1) verses = bible[book]["chapters"][ch1 - 1];
+        else if (v1 && !v2) verses.push(bible[book]["chapters"][ch1 - 1][v1 - 1]);
+        else for (let i = v1 - 1; i < v2; i++) verses.push(bible[book]["chapters"][ch1 - 1][i]);
+    } catch (e) {
+        console.warn("Error accessing verses for ref:", ref, e);
+        return null;
+    }
     return verses;
 }
 

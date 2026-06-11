@@ -87,10 +87,37 @@
         "tvář": "😊",
         "pokání": "🙏",
         "žena": "👩", "ženu": "👩",
-        "očí": "👁️", "oko": "👁️",
+        "očí": "👁️", "oko": "👁️", "oči": "👁️",
         "čtyřiadvacet": "🔢",
         "andělé": "😇",
-        "obraz": "🖼️", "obrazu": "🖼️"
+        "obraz": "🖼️", "obrazu": "🖼️",
+
+        // High-frequency Bible-wide Czech words
+        "hospodin": "👑", "hospodina": "👑", "hospodinu": "👑",
+        "hospodinův": "👑", "hospodinova": "👑", "hospodinem": "👑", "hospodine": "👑",
+        "ježíš": "✝️", "ježíše": "✝️", "ježíšovi": "✝️",
+        "izrael": "✡️", "izraele": "✡️", "izraeli": "✡️", "izraelovi": "✡️",
+        "david": "👑", "davida": "👑", "davidovi": "👑",
+        "mojžíš": "📜", "mojžíše": "📜", "mojžíšovi": "📜",
+        "jeruzalém": "✡️", "jeruzaléma": "✡️", "jeruzalémě": "✡️",
+        "syn": "👦", "syna": "👦", "synu": "👦", "synové": "👦", "syny": "👦", "synů": "👦", "synům": "👦",
+        "otec": "👨", "otce": "👨", "otci": "👨", "otcem": "👨",
+        "muž": "🧑", "muže": "🧑", "muži": "🧑", "mužem": "🧑",
+        "člověk": "🧑", "člověka": "🧑", "člověku": "🧑",
+        "lid": "👥", "lidu": "👥", "lide": "👥",
+        "dům": "🏠", "domu": "🏠", "domě": "🏠", "domů": "🏠",
+        "den": "📅", "dne": "📅", "dny": "📅", "dnů": "📅",
+        "srdce": "❤️",
+        "oběť": "🔥", "oběti": "🔥", "obětí": "🔥",
+        "království": "👑", "království": "👑",
+        "místo": "📍", "místě": "📍", "místa": "📍",
+        "ruka": "🤲", "ruky": "🤲", "ruce": "🤲", "rukou": "🤲",
+        "zástup": "👥", "zástupů": "👥", "zástupy": "👥",
+        "pokolení": "👥",
+        "výrok": "📢",
+        "pět": "5️⃣",
+        "dva": "2️⃣", "dvě": "2️⃣",
+        "království": "👑"
     };
 
     let dailyData = loadDailyData();

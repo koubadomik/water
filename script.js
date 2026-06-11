@@ -13,6 +13,34 @@ let currentVerseArray = null;
 const LAST_VERSE_KEY = "lastVerse";
 const LAST_APP_KEY = "lastApp";
 
+// Handle Sidebar
+const sidebar = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+const menuToggle = document.getElementById('menu-toggle');
+
+function openMenu() {
+    if (!sidebar || !sidebarOverlay) return;
+    sidebar.classList.remove('-translate-x-full');
+    sidebarOverlay.classList.remove('hidden');
+    setTimeout(() => sidebarOverlay.classList.add('opacity-100'), 10);
+}
+
+function closeMenu() {
+    if (!sidebar || !sidebarOverlay) return;
+    sidebar.classList.add('-translate-x-full');
+    sidebarOverlay.classList.remove('opacity-100');
+    setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
+}
+
+if (menuToggle) menuToggle.addEventListener('click', openMenu);
+if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeMenu);
+
+window.updateNavStreak = function() {
+    const data = JSON.parse(localStorage.getItem('dailyRoutineData')) || {streak: 0};
+    const navStreak = document.getElementById('nav-streak-count');
+    if (navStreak) navStreak.innerText = data.streak || 0;
+};
+
 /* -------------------- Helpers -------------------- */
 function escapeHTML(s) {
     return s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -290,8 +318,15 @@ document.getElementById("difficulty").addEventListener("change", e => {
 /* -------------------- Menu switching (show/hide typing area) -------------------- */
 function switchApp(app) {
     // highlight menu
-    document.querySelectorAll("#app-menu button").forEach(b => b.classList.remove("active"));
-    document.querySelector(`#app-menu button[data-app='${app}']`)?.classList.add("active");
+    document.querySelectorAll("#app-menu button").forEach(b => {
+        b.classList.remove("bg-gray-800", "text-white");
+        b.classList.add("text-gray-300");
+    });
+    const activeBtn = document.querySelector(`#app-menu button[data-app='${app}']`);
+    if (activeBtn) {
+        activeBtn.classList.add("bg-gray-800", "text-white");
+        activeBtn.classList.remove("text-gray-300");
+    }
 
     // show/hide primary app containers
     document.getElementById("byheart-container").style.display = app === "byheart" ? "block" : "none";
@@ -322,22 +357,29 @@ function switchApp(app) {
     } else if (app !== "daily" && window.hideDailyRoutine) {
         window.hideDailyRoutine();
     }
+
+    closeMenu();
+    updateNavStreak();
 }
 
 // wire up menu buttons
 document.querySelectorAll("#app-menu button").forEach(b => {
     b.addEventListener("click", () => {
         if (b.dataset.app) switchApp(b.dataset.app);
+        if (b.id === 'open-drill-mode') closeMenu();
     });
 });
 
 /* -------------------- Init on load -------------------- */
-loadBible();
-loadSavedTexts();
-const lastVerse = localStorage.getItem(LAST_VERSE_KEY);
-if (lastVerse) initBlanks(JSON.parse(lastVerse));
-const lastApp = localStorage.getItem(LAST_APP_KEY) || "daily";
-switchApp(lastApp);
+document.addEventListener('DOMContentLoaded', () => {
+    loadBible();
+    loadSavedTexts();
+    const lastVerse = localStorage.getItem(LAST_VERSE_KEY);
+    if (lastVerse) initBlanks(JSON.parse(lastVerse));
+    const lastApp = "daily";
+    switchApp(lastApp);
+    updateNavStreak();
+});
 
 /* -------------------- Audio Mode (karaoke, no stop button) -------------------- */
 const audioControls = document.getElementById("audio-controls");

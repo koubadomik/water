@@ -58,6 +58,7 @@
         dailyData.completedToday = true;
         dailyData.history = dailyData.history || [];
         saveDailyData();
+        if (window.updateNavStreak) window.updateNavStreak();
     }
 
     function getNextVerse(ref) {
@@ -91,26 +92,41 @@
         const doneToday = dailyData.lastDate === today && dailyData.completedToday;
 
         content.innerHTML = `
-            <div class="space-y-6 text-white">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-3xl font-bold">Daily Progress</h2>
-                    <div class="text-2xl">🔥 <span class="font-bold text-orange-400">${dailyData.streak}</span> day streak</div>
+            <div class="space-y-6 text-white text-center">
+                <div class="space-y-2">
+                    <h1 class="text-4xl font-extrabold text-blue-400">Welcome Back!</h1>
+                    <p class="text-gray-400 text-lg">Ready for your daily verse practice?</p>
+                </div>
+
+                <div class="flex justify-center items-center gap-8 py-4">
+                    <div class="text-center">
+                        <div class="text-4xl">🔥</div>
+                        <div class="text-2xl font-bold text-orange-400">${dailyData.streak}</div>
+                        <div class="text-xs uppercase tracking-wider text-gray-500">Streak</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl">🎯</div>
+                        <div class="text-2xl font-bold text-green-400">${dailyData.completedToday ? '1/1' : '0/1'}</div>
+                        <div class="text-xs uppercase tracking-wider text-gray-500">Today</div>
+                    </div>
                 </div>
                 
-                <div class="bg-gray-700 p-6 rounded-xl shadow-inner">
-                    <div class="flex justify-between mb-2">
-                        <span>Daily Goal</span>
-                        <span>${dailyData.completedToday ? '100' : '0'}%</span>
+                <div class="bg-gray-700/50 p-6 rounded-2xl shadow-inner border border-gray-600">
+                    <div class="flex justify-between mb-3 text-sm font-medium">
+                        <span>Daily Goal Progress</span>
+                        <span class="${dailyData.completedToday ? 'text-green-400' : 'text-blue-400'}">${dailyData.completedToday ? '100' : '0'}%</span>
                     </div>
-                    <div class="w-full bg-gray-600 rounded-full h-4">
-                        <div class="bg-green-500 h-4 rounded-full transition-all duration-1000" style="width: ${dailyData.completedToday ? '100' : '0'}%"></div>
+                    <div class="w-full bg-gray-900 rounded-full h-4 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-500 to-green-500 h-4 rounded-full transition-all duration-1000 ease-out" style="width: ${dailyData.completedToday ? '100' : '0'}%"></div>
                     </div>
                 </div>
 
-                <div class="bg-gray-700 p-6 rounded-xl">
-                    <h3 class="text-xl mb-4">Current Verse: <span class="text-blue-400 font-mono">${dailyData.currentVerse}</span></h3>
-                    <button id="start-routine" class="w-full py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-xl font-bold transition-colors">
-                        ${doneToday ? 'Routine Completed! Do it again?' : 'Start Daily Routine (10 min)'}
+                <div class="bg-gray-700/50 p-8 rounded-2xl border border-blue-500/30">
+                    <h3 class="text-xl mb-2 text-gray-300">Next Verse to Learn</h3>
+                    <div class="text-3xl font-mono text-blue-400 mb-8">${dailyData.currentVerse}</div>
+                    
+                    <button id="start-routine" class="w-full py-5 bg-blue-600 hover:bg-blue-700 rounded-xl text-xl font-bold transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-900/20">
+                        ${doneToday ? 'Routine Completed! Repeat?' : 'Start Daily Routine'}
                     </button>
                 </div>
             </div>

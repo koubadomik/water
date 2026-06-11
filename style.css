@@ -97,8 +97,8 @@ textarea {
 
 #app-menu {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 #app-menu button.active {
@@ -352,4 +352,11 @@ textarea {
         width: 100% !important;
         margin-bottom: 12px !important;
     }
+}
+#sidebar {
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.5);
+}
+
+#sidebar-overlay.opacity-100 {
+    opacity: 1;
 }

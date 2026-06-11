@@ -9,20 +9,51 @@
 </head>
 <body class="flex flex-col items-center p-6 font-sans">
 
-<!-- Top menu -->
-<div id="app-menu" class="w-full max-w-4xl">
-    <button data-app="daily" class="px-4 py-2 rounded">📅 Daily</button>
-    <button data-app="byheart" class="px-4 py-2 rounded">ByHeart</button>
-    <button data-app="palace" class="px-4 py-2 rounded">🏛️ Palace</button>
-    <button id="open-drill-mode" class="px-4 py-2 rounded ml-auto bg-yellow-400 text-black hover:bg-yellow-500">Drill</button>
-</div>
+<!-- Navbar with Hamburger -->
+<nav class="w-full bg-gray-900 border-b border-gray-800 fixed top-0 left-0 z-[100] h-16 flex items-center px-4 justify-between">
+    <div class="flex items-center gap-4">
+        <button id="menu-toggle" class="p-2 hover:bg-gray-800 rounded-lg transition-colors text-white" aria-label="Toggle Menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+        <span class="text-xl font-bold text-blue-400">VerseMaster</span>
+    </div>
+    <div id="nav-streak" class="flex items-center gap-2 bg-gray-800 px-3 py-1 rounded-full">
+        <span>🔥</span>
+        <span id="nav-streak-count" class="font-bold text-orange-400">0</span>
+    </div>
+</nav>
+
+<!-- Sidebar Menu -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-[110] hidden transition-opacity duration-300 opacity-0"></div>
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-gray-900 z-[120] transform -translate-x-full transition-transform duration-300 ease-in-out border-r border-gray-800">
+    <div class="p-6">
+        <h2 class="text-2xl font-bold text-white mb-8">Menu</h2>
+        <nav class="space-y-2" id="app-menu">
+            <button data-app="daily" class="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-300 hover:bg-gray-800 hover:text-white rounded-xl transition-all">
+                <span class="text-xl">📅</span> Daily Routine
+            </button>
+            <button data-app="byheart" class="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-300 hover:bg-gray-800 hover:text-white rounded-xl transition-all">
+                <span class="text-xl">🎯</span> ByHeart
+            </button>
+            <button data-app="palace" class="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-300 hover:bg-gray-800 hover:text-white rounded-xl transition-all">
+                <span class="text-xl">🏛️</span> Memory Palace
+            </button>
+            <button id="open-drill-mode" class="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-300 hover:bg-gray-800 hover:text-white rounded-xl transition-all">
+                <span class="text-xl">⚔️</span> Drill Mode
+            </button>
+        </nav>
+    </div>
+</aside>
 
 <!-- Main container -->
-<div id="daily-container" class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow space-y-4" style="display:none;">
-    <div id="daily-content"></div>
-</div>
+<main class="w-full max-w-4xl mt-20 mb-24 px-4">
+    <div id="daily-container" class="bg-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
+        <div id="daily-content"></div>
+    </div>
 
-<div id="byheart-container" class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow space-y-4">
+<div id="byheart-container" class="bg-gray-800 p-6 rounded-2xl shadow-xl space-y-4" style="display:none;">
 
     <!-- Verse input -->
     <div>
@@ -131,6 +162,8 @@
     </div>
 </div>
 <!-- Drill mode UI: END -->
+
+</main>
 
 <script src="script.js"></script>
 <script src="memoryPalace.js"></script>

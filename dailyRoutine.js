@@ -5,22 +5,92 @@
 
     // Emoji data for shortcodes
     const emojiData = {
-        "smile": "😊", "joy": "😂", "heart": "❤️", "star": "⭐", "fire": "🔥", "crown": "👑", "pray": "🙏", "bible": "📖", "cross": "✝️",
-        "sheep": "🐑", "king": "🤴", "queen": "👸", "angel": "😇", "dove": "🕊️", "cloud": "☁️", "sun": "☀️", "moon": "🌙", "world": "🌎",
-        "gift": "🎁", "bell": "🔔", "music": "🎵", "lamp": "💡", "shield": "🛡️", "sword": "⚔️", "key": "🔑", "door": "🚪", "bread": "🍞",
-        "wine": "🍷", "cup": "🍷", "fish": "🐟", "boat": "⛵", "mountain": "⛰️", "tree": "🌳", "flower": "🌸", "bird": "🐦", "lion": "🦁",
-        "snake": "🐍", "dragon": "🐉", "hand": "✋", "eye": "👁️", "ear": "👂", "mouth": "👄", "foot": "🦶", "heart_eyes": "😍", "sparkles": "✨",
-        "check": "✅", "x": "❌", "warn": "⚠️", "info": "ℹ️", "question": "❓", "plus": "➕", "minus": "➖", "search": "🔍", "home": "🏠",
-        "city": "🏙️", "gold": "💰", "silver": "🥈", "stone": "🪨", "fire_on": "🔥", "water": "💧", "wind": "💨", "earth": "🌍", "heaven": "🌌",
-        "hell": "🔥", "church": "⛪", "scroll": "📜", "trumpet": "🎺", "harp": "🎸", "throne": "🪑", "blood": "🩸", "oil": "🫗", "honey": "🍯",
-        "milk": "🥛", "meat": "🥩", "fruit": "🍎", "seed": "🌱", "harvest": "🌾", "vine": "🍇", "palm": "🌴", "olive": "🫒", "fig": "🫘",
-        "wolf": "🐺", "lamb": "🐑", "ox": "🐂", "donkey": "🫏", "horse": "🐎", "camel": "🐫", "eagle": "🦅", "dove_white": "🕊️", "raven": "🐦‍⬛",
-        "light": "💡", "dark": "🌑", "life": "🌱", "death": "💀", "soul": "👻", "spirit": "🕊️", "holy": "✨", "glory": "🌟", "power": "⚡",
-        "god": "👑", "lord": "👑", "jesus": "✝️", "christ": "✝️", "word": "📖",
-        "commandment": "📜", "commandments": "📜", "statute": "📜", "statutes": "📜", "law": "📜", "laws": "📜",
-        "judgment": "📜", "judgments": "📜", "testimony": "📜", "testimonies": "📜",
-        "truth": "⚖️", "peace": "☮️", "love_letter": "💌", "broken_heart": "💔", "kiss": "💋", "ring": "💍", "gem": "💎", "money": "💵",
-        "hammer": "🔨", "axe": "🪓", "saw": "🪚", "anchor": "⚓", "clock": "⏰", "watch": "⌚", "hourglass": "⏳"
+        // Czech — top words from Revelation (Zj)
+        "země": "🌍", "zemi": "🌍", "zem": "🌍",
+        "nebe": "🌌", "nebi": "🌌",
+        "hlas": "🔊", "hlasem": "🔊",
+        "anděl": "😇", "anděla": "😇", "andělu": "😇", "andělů": "😇",
+        "trůn": "🪑", "trůnu": "🪑", "trůnem": "🪑",
+        "sedm": "7️⃣", "sedmi": "7️⃣",
+        "tisíc": "🔢",
+        "dvanáct": "🔢",
+        "čtyři": "4️⃣",
+        "první": "1️⃣",
+        "moc": "⚡", "mocným": "⚡", "pravomoc": "⚡",
+        "jméno": "📛",
+        "město": "🏙️", "města": "🏙️",
+        "moře": "🌊", "moři": "🌊",
+        "krev": "🩸",
+        "slunce": "☀️",
+        "smrt": "💀",
+        "šelma": "🐉", "šelmy": "🐉", "šelmě": "🐉",
+        "drak": "🐉",
+        "beránek": "🐑",
+        "svitek": "📜", "svitku": "📜",
+        "národy": "🌍",
+        "kmene": "👥",
+        "hvězd": "⭐", "hvězda": "⭐", "hvězdy": "⭐",
+        "skutky": "🤲",
+        "duch": "🕊️",
+        "svědectví": "📜",
+        "slávu": "🌟", "sláva": "🌟",
+        "starších": "👴",
+        "svatý": "✨", "svatých": "✨", "svatyně": "⛪",
+        "amen": "🙏",
+        "pán": "👑",
+        "zvuk": "🔊",
+        "bůh": "👑", "boha": "👑", "bohu": "👑", "boží": "👑",
+        "slovo": "📖", "slova": "📖",
+        "život": "🌱", "života": "🌱",
+        "věky": "♾️", "věků": "♾️",
+        "běda": "⚠️",
+        "třetina": "3️⃣",
+        "napiš": "✍️",
+        "otevřel": "🚪",
+        "uviděl": "👁️", "spatřil": "👁️", "viděl": "👁️",
+        "uslyšel": "👂",
+        "hle": "👁️",
+        "seděl": "🪑", "sedí": "🪑",
+        "vítězí": "🏆",
+        "přijdu": "🚶",
+        "uši": "👂",
+        "veliký": "🔥", "veliké": "🔥", "veliká": "🔥",
+        "čas": "⏳",
+        "deset": "🔟",
+        "vod": "💧",
+        "padl": "⬇️",
+        "slyš": "👂",
+        "sboru": "⛪", "sborům": "⛪",
+        "roh": "📯", "rohů": "📯",
+        "lidé": "👥", "lidí": "👥", "lidi": "👥",
+        "tři": "3️⃣", "třetí": "3️⃣",
+        "dým": "🌫️",
+        "proroctví": "📜",
+        "všemohoucí": "⚡", "mocný": "⚡", "mocná": "⚡",
+        "ostrý": "⚔️",
+        "hlasy": "🔊",
+        "živé": "🌱", "živých": "🌱",
+        "bytosti": "🦁", "bytost": "🦁",
+        "pane": "👑",
+        "pečeť": "🔒",
+        "zemětřesení": "🌋",
+        "hněv": "⚡", "hněvu": "⚡",
+        "zatroubil": "🎺",
+        "bezedné": "🕳️", "propast": "🕳️", "propasti": "🕳️",
+        "tělo": "🫀", "těla": "🫀",
+        "cejch": "🔖",
+        "srp": "🌾",
+        "vylil": "🫗", "miska": "🫗", "misku": "🫗",
+        "duchů": "🕊️",
+        "král": "👑", "králů": "👑",
+        "krví": "🩸",
+        "tvář": "😊",
+        "pokání": "🙏",
+        "žena": "👩", "ženu": "👩",
+        "očí": "👁️", "oko": "👁️",
+        "čtyřiadvacet": "🔢",
+        "andělé": "😇",
+        "obraz": "🖼️", "obrazu": "🖼️"
     };
 
     let dailyData = loadDailyData();
@@ -258,30 +328,73 @@
 
         const updateGlobalList = () => {
             globalList.innerHTML = '';
-            Object.entries(customEmojis).forEach(([phrase, emoji]) => {
+
+            // ── Custom symbols ──
+            const customEntries = Object.entries(customEmojis);
+            const customSection = document.createElement('div');
+            customSection.className = 'w-full space-y-2';
+            customSection.innerHTML = `<p class="text-xs font-bold uppercase tracking-widest text-blue-400">Your symbols (${customEntries.length})</p>`;
+            const customGrid = document.createElement('div');
+            customGrid.className = 'flex flex-wrap gap-2';
+            if (customEntries.length === 0) {
+                customGrid.innerHTML = '<p class="text-gray-500 italic text-sm">No custom symbols yet.</p>';
+            } else {
+                customEntries.forEach(([phrase, emoji]) => {
+                    const tag = document.createElement('div');
+                    tag.className = 'bg-gray-900 px-3 py-1.5 rounded-xl flex items-center gap-2 border border-blue-700 shadow group';
+                    tag.innerHTML = `
+                        <span class="font-bold text-blue-200 cursor-help underline decoration-dotted decoration-blue-500/30 hover:decoration-blue-500 text-sm" title="Click to see usages">${phrase}</span>
+                        <span class="text-xl">${emoji}</span>
+                        <button class="text-red-400 hover:text-red-300 text-lg leading-none" data-phrase="${phrase}">×</button>
+                    `;
+                    tag.querySelector('span').onclick = () => showExpressionUsages(phrase);
+                    tag.querySelector('button').onclick = () => {
+                        if (confirm(`Delete symbol for "${phrase}"?`)) {
+                            delete customEmojis[phrase];
+                            saveCustomEmojis();
+                            updateGlobalList();
+                            if (designArea.dataset.currentVerse) renderSetupInterface(designArea.dataset.currentVerse);
+                        }
+                    };
+                    customGrid.appendChild(tag);
+                });
+            }
+            customSection.appendChild(customGrid);
+            globalList.appendChild(customSection);
+
+            // ── Built-in dictionary ──
+            const builtinSection = document.createElement('div');
+            builtinSection.className = 'w-full space-y-2 mt-4';
+
+            const builtinEntries = Object.entries(emojiData);
+            const toggleId = 'builtin-toggle';
+            builtinSection.innerHTML = `
+                <button id="${toggleId}" class="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-200 flex items-center gap-1">
+                    <span id="builtin-arrow">▶</span> Built-in dictionary (${builtinEntries.length})
+                </button>
+                <div id="builtin-grid" class="hidden flex-wrap gap-2"></div>
+            `;
+            globalList.appendChild(builtinSection);
+
+            const builtinGrid = builtinSection.querySelector('#builtin-grid');
+            builtinEntries.forEach(([phrase, emoji]) => {
                 const tag = document.createElement('div');
-                tag.className = 'bg-gray-900 px-4 py-2 rounded-xl flex items-center gap-3 border border-gray-700 shadow-lg group relative';
+                tag.className = 'bg-gray-900/60 px-3 py-1.5 rounded-xl flex items-center gap-2 border border-gray-700';
                 tag.innerHTML = `
-                    <span class="font-bold text-blue-200 cursor-help underline decoration-dotted decoration-blue-500/30 hover:decoration-blue-500" title="Click to see other usages">${phrase}</span> 
-                    <span class="text-2xl">${emoji}</span> 
-                    <button class="text-red-400 hover:text-red-300 ml-2 text-xl" data-phrase="${phrase}">×</button>
+                    <span class="text-gray-300 text-sm cursor-help" title="Click to see usages">${phrase}</span>
+                    <span class="text-xl">${emoji}</span>
                 `;
                 tag.querySelector('span').onclick = () => showExpressionUsages(phrase);
-                tag.querySelector('button').onclick = () => {
-                    if (confirm(`Delete symbol for "${phrase}"?`)) {
-                        delete customEmojis[phrase];
-                        saveCustomEmojis();
-                        updateGlobalList();
-                        if (designArea.dataset.currentVerse) {
-                            renderSetupInterface(designArea.dataset.currentVerse);
-                        }
-                    }
-                };
-                globalList.appendChild(tag);
+                builtinGrid.appendChild(tag);
             });
-            if (Object.keys(customEmojis).length === 0) {
-                globalList.innerHTML = '<p class="text-gray-500 italic">No custom symbols created yet.</p>';
-            }
+
+            builtinSection.querySelector(`#${toggleId}`).onclick = () => {
+                const grid = builtinSection.querySelector('#builtin-grid');
+                const arrow = builtinSection.querySelector('#builtin-arrow');
+                const isHidden = grid.classList.toggle('hidden');
+                grid.classList.toggle('flex', !isHidden);
+                arrow.textContent = isHidden ? '▶' : '▼';
+            };
         };
 
         const renderSetupInterface = (text, refLabel = '') => {
@@ -298,16 +411,14 @@
                     let mappedEmoji = '';
                     let isMappingHead = false;
                     
-                    // Priority: longest phrase that matches
+                    // Priority: custom phrases → custom single word → built-in emojiData
+                    const cleanToken = (s) => s.toLowerCase().replace(/[^\wÀ-ɏ\s'-]/g, '');
                     const sortedPhrases = Object.keys(customEmojis).sort((a,b) => b.length - a.length);
                     for (const phrase of sortedPhrases) {
                         const pWords = phrase.split(/\s+/);
-                        // Simple sliding window check
                         for (let start = 0; start <= setupWords.length - pWords.length; start++) {
-                            const segment = setupWords.slice(start, start + pWords.length).join(' ').toLowerCase().replace(/[^\w\s]/g, '');
-                            const cleanPhrase = phrase.toLowerCase().replace(/[^\w\s]/g, '');
-                            
-                            if (segment === cleanPhrase) {
+                            const segment = setupWords.slice(start, start + pWords.length).join(' ');
+                            if (cleanToken(segment) === cleanToken(phrase)) {
                                 if (i >= start && i < start + pWords.length) {
                                     mappedEmoji = customEmojis[phrase];
                                     if (i === start) isMappingHead = true;
@@ -316,6 +427,12 @@
                             }
                         }
                         if (mappedEmoji) break;
+                    }
+                    // Fall back to built-in dictionary for single words
+                    if (!mappedEmoji) {
+                        const wordClean = cleanToken(setupWords[i]).replace(/\s+/g, '');
+                        mappedEmoji = emojiData[wordClean] || '';
+                        if (mappedEmoji) isMappingHead = true;
                     }
 
                     return `
@@ -607,29 +724,34 @@
 
     function showMainDashboard() {
         const content = document.getElementById('daily-content');
-        const today = new Date().toISOString().split('T')[0];
-        
+        const todayDate = new Date();
+        const today = todayDate.toISOString().split('T')[0];
+
         const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-        const todayIdx = (new Date().getDay() + 6) % 7; 
-        
+        const todayIdx = (todayDate.getDay() + 6) % 7;
+
         let weeklyHtml = '';
         weekdays.forEach((day, i) => {
             const isToday = i === todayIdx;
-            const completed = dailyData.weeklyProgress[today] && isToday; 
+            const offset = i - todayIdx;
+            const slotDate = new Date(todayDate);
+            slotDate.setDate(todayDate.getDate() + offset);
+            const slotStr = slotDate.toISOString().split('T')[0];
+            const completed = !!dailyData.weeklyProgress[slotStr];
             weeklyHtml += `
-                <div class="flex flex-col items-center gap-1">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg 
+                <div class="flex flex-col items-center gap-0.5">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-base
                         ${completed ? 'bg-orange-500 text-white' : (isToday ? 'border-2 border-blue-400 text-blue-400' : 'bg-gray-700 text-gray-500')}">
                         ${completed ? '🔥' : (isToday ? '😴' : day)}
                     </div>
-                    <span class="text-[10px] uppercase font-bold text-gray-500">${day}</span>
+                    <span class="text-[9px] uppercase font-bold text-gray-500">${day}</span>
                 </div>
             `;
         });
 
         content.innerHTML = `
             <div class="space-y-8">
-                <div class="flex justify-between items-center bg-gray-900/50 p-4 rounded-2xl">
+                <div class="grid grid-cols-7 items-center bg-gray-900/50 px-2 py-3 rounded-2xl">
                     ${weeklyHtml}
                 </div>
 
@@ -704,15 +826,16 @@
         const content = document.getElementById('daily-content');
         
         // Exercise Pool
-        const introExercises = ['word_scramble', 'first_letter', 'phrase_order', 'emoji_guess', 'multiple_choice', 'flashcard_flip'];
-        const practiceExercises = ['word_scramble', 'first_letter', 'phrase_order', 'dictation', 'emoji_guess', 'fill_blanks', 'reference_match', 'verse_matcher'];
-        const masteryExercises = ['dictation', 'full_recall', 'first_letter', 'phrase_order', 'emoji_guess', 'fill_blanks', 'reference_match'];
+        const introExercises = ['word_scramble', 'first_letter', 'phrase_order', 'emoji_guess', 'multiple_choice', 'flashcard_flip', 'missing_word'];
+        const practiceExercises = ['word_scramble', 'first_letter', 'phrase_order', 'dictation', 'emoji_guess', 'fill_blanks', 'reference_match', 'verse_matcher', 'missing_word', 'note_recall', 'spot_error'];
+        const masteryExercises = ['dictation', 'full_recall', 'first_letter', 'phrase_order', 'emoji_guess', 'fill_blanks', 'reference_match', 'note_recall', 'spot_error'];
 
         // Development / Testing sequence
         const devExercises = [
-            'context', 'word_scramble', 'first_letter', 'phrase_order', 
-            'emoji_guess', 'multiple_choice', 'fill_blanks', 'reference_match', 
-            'verse_matcher', 'flashcard_flip', 'dictation', 'full_recall'
+            'context', 'word_scramble', 'first_letter', 'phrase_order',
+            'emoji_guess', 'multiple_choice', 'fill_blanks', 'reference_match',
+            'verse_matcher', 'flashcard_flip', 'dictation', 'full_recall',
+            'missing_word', 'note_recall', 'spot_error'
         ];
 
         let steps = [];
@@ -867,7 +990,7 @@
                     const usedIndices = new Set();
 
                     // Helper to clean word for matching
-                    const cleanForMatch = (str) => str.replace(/[^\w]/g, '').toLowerCase();
+                    const cleanForMatch = (str) => str.replace(/[^\wÀ-ɏ'-]/g, '').toLowerCase();
 
                     // 1. Check custom phrases (multiple words)
                     const customPhrases = Object.entries(customEmojis)
@@ -920,28 +1043,16 @@
                         }
                     });
 
-                    // 3. Fallback to dictionary symbols (emojiData)
-                    const fallbacks = {
-                        "gods": "god",
-                        "lords": "lord",
-                        "heavens": "heaven",
-                        "words": "word"
-                    };
-
+                    // 3. Fallback to hand-coded emojiData
                     wordsForEmoji.forEach((w, i) => {
                         if (usedIndices.has(i)) return;
                         const clean = cleanForMatch(w);
                         if (!clean) return;
-                        
-                        if (emojiData[clean]) {
-                            resolvedEmojis[i] = { emoji: emojiData[clean], isStart: true, isEnd: true };
+
+                        const emoji = emojiData[clean];
+                        if (emoji) {
+                            resolvedEmojis[i] = { emoji, isStart: true, isEnd: true };
                             usedIndices.add(i);
-                        } else {
-                            const fallbackKey = fallbacks[clean];
-                            if (fallbackKey && emojiData[fallbackKey]) {
-                                resolvedEmojis[i] = { emoji: emojiData[fallbackKey], isStart: true, isEnd: true };
-                                usedIndices.add(i);
-                            }
                         }
                     });
 
@@ -966,12 +1077,16 @@
                                         displayWords = wordsForEmoji.slice(i, i + count).join(' ');
                                     }
 
-                                    // Display emoji first, word is hidden
+                                    // Words without an emoji stay visible; words with an emoji are hidden behind it
+                                    if (!res) {
+                                        return `<span class="text-white text-lg font-mono px-1">${displayWords}</span>`;
+                                    }
+
                                     const emojiShortcode = Object.keys(emojiData).find(key => emojiData[key] === displayEmoji);
                                     const emojiTitle = emojiShortcode ? `:${emojiShortcode}:` : '';
 
                                     return `<button class="emoji-word-reveal flex flex-col items-center gap-1 p-2 rounded hover:bg-gray-800 transition-colors" data-index="${i}" data-count="${count}" title="${emojiTitle}">
-                                        <span class="emoji-icon text-4xl h-10 flex items-center justify-center">${displayEmoji || '✨'}</span>
+                                        <span class="emoji-icon text-4xl h-10 flex items-center justify-center">${displayEmoji}</span>
                                         <span class="reveal-text text-sm text-transparent font-mono border-t border-gray-700 pt-1">${displayWords.split(' ').map(dw => (dw[0] || '') + '___').join(' ')}</span>
                                     </button>`;
                                 }).join('')}
@@ -1332,6 +1447,125 @@
                     };
                     break;
 
+                case 'missing_word': {
+                    const mwWords = verseText.split(/\s+/).filter(w => w.length > 0);
+                    const mwContent = mwWords
+                        .map((w, i) => ({ raw: w, clean: w.replace(/[^\w]/g, ''), i }))
+                        .filter(x => x.clean.length > 3);
+                    const mwTarget = mwContent[Math.floor(Math.random() * mwContent.length)];
+                    window.currentMissingWord = mwTarget ? mwTarget.clean : '';
+
+                    const mwDisplay = mwWords.map((w, i) =>
+                        mwTarget && i === mwTarget.i
+                            ? '<span class="text-blue-300 font-bold border-b-2 border-blue-400 px-2 mx-1">[?]</span>'
+                            : w
+                    ).join(' ');
+
+                    const mwDistractors = mwContent
+                        .filter(x => mwTarget && x.i !== mwTarget.i && x.clean.toLowerCase() !== mwTarget.clean.toLowerCase())
+                        .sort(() => 0.5 - Math.random())
+                        .slice(0, 3)
+                        .map(x => x.clean);
+
+                    const mwChoices = [mwTarget ? mwTarget.clean : ''].concat(mwDistractors).filter(Boolean).sort(() => 0.5 - Math.random());
+
+                    container.innerHTML = `
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-bold text-blue-300">Missing Word</h2>
+                            <p class="text-gray-400 text-sm">Which word fills the gap?</p>
+                            <div class="bg-gray-900 p-6 rounded-xl text-xl leading-relaxed">${mwDisplay}</div>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${mwChoices.map(c => `<button class="missing-choice bg-gray-800 p-4 rounded-xl font-bold text-lg hover:bg-gray-700 border border-transparent transition-all" data-word="${c.replace(/"/g, '&quot;')}">${c}</button>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                    container.querySelectorAll('.missing-choice').forEach(btn => {
+                        btn.onclick = () => {
+                            container.querySelectorAll('.missing-choice').forEach(b => {
+                                b.classList.remove('border-blue-500', 'bg-blue-900/40');
+                                delete b.dataset.selected;
+                            });
+                            btn.classList.add('border-blue-500', 'bg-blue-900/40');
+                            btn.dataset.selected = 'true';
+                        };
+                    });
+                    break;
+                }
+
+                case 'note_recall': {
+                    const nrNote = getNoteForVerse(node.verse);
+                    container.innerHTML = nrNote ? `
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-bold text-blue-300">Palace Note Recall</h2>
+                            <p class="text-gray-400 text-sm">You wrote this memory cue — now recall the verse:</p>
+                            <div class="bg-blue-900/20 border border-blue-500/30 p-5 rounded-xl italic text-gray-200 text-lg leading-relaxed">"${nrNote}"</div>
+                            <p class="text-xs text-center text-gray-500">Reference: <span class="text-white font-bold">${node.verse}</span></p>
+                            <textarea id="note-recall-input" class="w-full h-32 p-4 rounded-xl bg-gray-900 border-2 border-blue-500 text-white text-lg" placeholder="Type the verse from memory..."></textarea>
+                        </div>
+                    ` : `
+                        <div class="space-y-4 text-center py-6">
+                            <div class="text-5xl">📝</div>
+                            <h2 class="text-2xl font-bold text-blue-300">Palace Note Recall</h2>
+                            <p class="text-gray-400">No memory note yet for <span class="text-white">${node.verse}</span>.</p>
+                            <p class="text-gray-500 text-sm">Add one in the Context step to unlock this exercise fully.</p>
+                            <textarea id="note-recall-input" class="w-full h-32 p-4 rounded-xl bg-gray-900 border border-gray-600 text-white" placeholder="Type the verse anyway..."></textarea>
+                        </div>
+                    `;
+                    break;
+                }
+
+                case 'spot_error': {
+                    const seWords = verseText.split(/\s+/).filter(w => w.length > 0);
+                    const seContent = seWords.map((w, i) => ({ w, i })).filter(x => x.w.replace(/[^\w]/g, '').length > 3);
+                    const seTarget = seContent[Math.floor(Math.random() * seContent.length)];
+
+                    let seIntruder = null;
+                    for (const cv of getChapterVerses().filter(v => v !== verse).sort(() => 0.5 - Math.random())) {
+                        const cvArr = parseReference(cv);
+                        if (!cvArr) continue;
+                        const cvWords = cvArr.join(' ').split(/\s+/).filter(w => w.replace(/[^\w]/g, '').length > 3);
+                        const novel = cvWords.find(cw => !seWords.some(sw => sw.replace(/[^\w]/g, '').toLowerCase() === cw.replace(/[^\w]/g, '').toLowerCase()));
+                        if (novel) { seIntruder = novel.replace(/[^\w]/g, ''); break; }
+                    }
+
+                    const seHasError = !!(seTarget && seIntruder);
+                    window.currentSpotError = seHasError ? seTarget.i : null;
+                    window.spotErrorFound = !seHasError;
+
+                    const seDisplay = seHasError
+                        ? seWords.map((w, i) => i === seTarget.i ? seIntruder : w)
+                        : seWords;
+
+                    container.innerHTML = `
+                        <div class="space-y-6">
+                            <h2 class="text-2xl font-bold text-blue-300">Spot the Error</h2>
+                            <p class="text-gray-400 text-sm">One word has been swapped out. Tap the intruder.</p>
+                            <div class="bg-gray-900 p-6 rounded-xl text-xl leading-relaxed flex flex-wrap gap-2">
+                                ${seDisplay.map((w, i) => `<button class="spot-word px-2 py-1 rounded border border-transparent hover:bg-gray-700 transition-all" data-index="${i}">${w}</button>`).join('')}
+                            </div>
+                            <div id="spot-feedback" class="text-center min-h-[1.5rem]"></div>
+                        </div>
+                    `;
+                    container.querySelectorAll('.spot-word').forEach(btn => {
+                        btn.onclick = () => {
+                            container.querySelectorAll('.spot-word').forEach(b => {
+                                b.classList.remove('bg-red-900/40', 'border-red-500', 'bg-green-900/40', 'border-green-500');
+                            });
+                            const clicked = parseInt(btn.dataset.index);
+                            const fb = document.getElementById('spot-feedback');
+                            if (seHasError && clicked === seTarget.i) {
+                                btn.classList.add('bg-green-900/40', 'border-green-500');
+                                fb.innerHTML = `<span class="text-green-400 font-bold">✓ That's the intruder!</span>`;
+                                window.spotErrorFound = true;
+                            } else {
+                                btn.classList.add('bg-red-900/40', 'border-red-500');
+                                fb.innerHTML = `<span class="text-orange-400 font-bold">✗ Not quite — keep looking.</span>`;
+                            }
+                        };
+                    });
+                    break;
+                }
+
                 case 'keyword_focus':
                     const words = verseText.split(/\s+/);
                     container.innerHTML = `
@@ -1371,8 +1605,9 @@
                     }
                 }
                 nextStep();
-            } else if (['word_scramble', 'phrase_order', 'first_letter', 'emoji_guess', 'dictation', 'full_recall', 
-                        'multiple_choice', 'fill_blanks', 'reference_match', 'verse_matcher', 'flashcard_flip', 'keyword_focus'].includes(type)) {
+            } else if (['word_scramble', 'phrase_order', 'first_letter', 'emoji_guess', 'dictation', 'full_recall',
+                        'multiple_choice', 'fill_blanks', 'reference_match', 'verse_matcher', 'flashcard_flip', 'keyword_focus',
+                        'missing_word', 'note_recall', 'spot_error'].includes(type)) {
                 if (btn.innerText === "Check" || btn.innerText === "Finish Lesson" || btn.innerText === "Save Note" || btn.innerText === "Got it!") {
                     
                     // Add simple visual feedback based on type
@@ -1460,6 +1695,17 @@
                     } else if (type === 'dictation') {
                         const val = document.getElementById('dictation-input').value.trim();
                         if (val.length < 5) isCorrect = false;
+                    } else if (type === 'missing_word') {
+                        const selected = document.querySelector('.missing-choice[data-selected="true"]');
+                        if (!selected || selected.dataset.word !== window.currentMissingWord) isCorrect = false;
+                    } else if (type === 'note_recall') {
+                        const val = document.getElementById('note-recall-input')?.value.trim();
+                        if (!val || val.length < 10) isCorrect = false;
+                    } else if (type === 'spot_error') {
+                        if (!window.spotErrorFound) {
+                            isCorrect = false;
+                            feedbackMsg = "⚠️ Find the intruder word first!";
+                        }
                     }
 
                     const feedback = document.createElement('div');

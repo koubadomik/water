@@ -11,14 +11,18 @@
 
 <!-- Top menu -->
 <div id="app-menu" class="w-full max-w-4xl">
+    <button data-app="daily" class="px-4 py-2 rounded">📅 Daily</button>
     <button data-app="byheart" class="px-4 py-2 rounded">ByHeart</button>
     <button data-app="palace" class="px-4 py-2 rounded">🏛️ Palace</button>
     <button id="open-drill-mode" class="px-4 py-2 rounded ml-auto bg-yellow-400 text-black hover:bg-yellow-500">Drill</button>
 </div>
 
 <!-- Main container -->
+<div id="daily-container" class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow space-y-4" style="display:none;">
+    <div id="daily-content"></div>
+</div>
+
 <div id="byheart-container" class="w-full max-w-4xl bg-gray-800 p-6 rounded shadow space-y-4">
-    <h1 class="text-2xl font-bold text-white">Verse / Text Practice</h1>
 
     <!-- Verse input -->
     <div>
@@ -130,5 +134,6 @@
 
 <script src="script.js"></script>
 <script src="memoryPalace.js"></script>
+<script src="dailyRoutine.js"></script>
 </body>
 </html>

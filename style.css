@@ -123,32 +123,17 @@ textarea {
 }
 
 /* Drill mode styles: START */
-#drill-modal-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 12px;
-}
-
-#drill-modal-overlay.drill-hidden, .drill-hidden {
-    display: none !important;
+#drill-container {
+    width: 100%;
 }
 
 #drill-modal {
     width: 100%;
-    max-width: 900px;
-    background: #111827;
     color: #e5e7eb;
-    border-radius: 10px;
-    padding: 1rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    max-height: 95vh;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
+}
+
+.drill-hidden {
+    display: none !important;
 }
 
 .drill-header {
@@ -156,11 +141,11 @@ textarea {
     align-items: center;
     gap: 1rem;
     justify-content: space-between;
+    margin-bottom: 1rem;
 }
 
 .drill-header h3 {
     margin: 0;
-    font-size: 1.1rem;
 }
 
 .drill-header button {
@@ -175,7 +160,7 @@ textarea {
 .drill-controls {
     display: flex;
     gap: 0.5rem;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
 }
 
 .drill-controls input {
@@ -188,8 +173,11 @@ textarea {
 }
 
 .drill-controls button {
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 1rem;
     border-radius: 6px;
+    background: #3b82f6;
+    color: white;
+    font-weight: bold;
 }
 
 #drill-current-info {
@@ -234,8 +222,9 @@ textarea {
 .drill-actions .btn-check {
     background: #059669;
     color: white;
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 1rem;
     border-radius: 6px;
+    font-weight: bold;
 }
 
 .drill-options {

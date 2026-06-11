@@ -337,6 +337,9 @@ function switchApp(app) {
     const palace = document.getElementById("palace-container");
     if (palace) palace.style.display = app === "palace" ? "block" : "none";
 
+    const drill = document.getElementById("drill-container");
+    if (drill) drill.style.display = app === "drill" ? "block" : "none";
+
     // persist last app
     localStorage.setItem(LAST_APP_KEY, app);
 
@@ -349,6 +352,11 @@ function switchApp(app) {
     // initialize memory palace when opening it
     if (app === "palace" && window.initMemoryPalace) {
         window.initMemoryPalace();
+    }
+    
+    // initialize drill mode when opening it
+    if (app === "drill" && window.initDrillMode) {
+        window.initDrillMode();
     }
     
     // initialize daily routine when opening it
@@ -662,9 +670,6 @@ toggleAudio.addEventListener("change", (e) => {
 
     // UI wiring
     document.addEventListener('DOMContentLoaded', function () {
-        const openBtn = document.getElementById('open-drill-mode');
-        const overlay = document.getElementById('drill-modal-overlay');
-        const closeBtn = document.getElementById('close-drill-mode');
         const loadBtn = document.getElementById('drill-load-btn');
         const refInput = document.getElementById('drill-verse-input');
         const typingInput = document.getElementById('drill-typing-input');
@@ -686,25 +691,11 @@ toggleAudio.addEventListener("change", (e) => {
         const persisted = _load();
         if (persisted && persisted.verses && persisted.verses.length) state = persisted;
 
-        function openModal() {
-            overlay.classList.remove('drill-hidden');
-            overlay.setAttribute('aria-hidden', 'false');
+        window.initDrillMode = function() {
             if (state.ref) refInput.value = state.ref;
             _updateDisplay();
             typingInput.focus();
-        }
-
-        function closeModal() {
-            overlay.classList.add('drill-hidden');
-            overlay.setAttribute('aria-hidden', 'true');
-            _save(state);
-        }
-
-        if (openBtn) openBtn.addEventListener('click', openModal);
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeModal();
-        });
+        };
 
         function _setVersesArray(ref, verses) {
             state.ref = ref || '';

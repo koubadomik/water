@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Vue app
+        run: npm run build
+        env:
+          VITE_BASE: /water/next/
+
+      # Rename vue.html → index.html so /next/ resolves cleanly
+      - name: Fix Vue app entry filename
+        run: |
+          if [ -f dist/vue.html ]; then
+            mv dist/vue.html dist/index.html
+          fi
+
+      # Assemble deploy/ directory:
+      #   root  → old vanilla app
+      #   next/ → new Vue app
+      - name: Assemble deploy directory
+        run: |
+          mkdir -p deploy/next
+          cp index.html style.css script.js memoryPalace.js dailyRoutine.js deploy/
+          cp -r resources deploy/
+          cp -r dist/. deploy/next/
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy

@@ -18,9 +18,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
-const activeTab = ref('home')
+const activeTab = defineModel({ default: 'home' })
 
 const tabs = [
   { id: 'home',    icon: '🏠', label: 'Home' },

@@ -8,7 +8,7 @@ export function usePalaceNotes() {
   if (!notes) notes = useStorage(LS_KEY, {})
 
   function noteKey(book, chapter) {
-    return `${book}_${chapter}`
+    return `${book}_${Number(chapter) - 1}`
   }
 
   function getNote(book, chapter, verseIdx) {

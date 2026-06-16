@@ -46,10 +46,14 @@
           class="path-node-row"
           :class="{ offset: i % 2 === 1 }"
         >
-          <button class="path-node" @click="startSessionFor(verse)">
+          <button class="path-node" :class="{ drilled: verse.drilledAt }" @click="startSessionFor(verse)">
             <span class="node-num">{{ i + 1 }}</span>
+            <span v-if="verse.drilledAt" class="node-check">✓</span>
           </button>
-          <div class="node-label">{{ verse.ref }}</div>
+          <div class="node-label">
+            {{ verse.ref }}
+            <span v-if="verse.note" class="note-badge">📝</span>
+          </div>
         </div>
       </div>
 
@@ -72,9 +76,10 @@ import { useVerseList } from '../composables/useVerseList.js'
 import { useProgress } from '../composables/useProgress.js'
 import { useSession } from '../composables/useSession.js'
 
-const { verses } = useVerseList()
+const { verses, updateDrilled } = useVerseList()
 const { streak, completeSession } = useProgress()
-const { phase, advance, addXp } = useSession()
+const session = useSession()
+const { phase, advance, addXp } = session
 
 const sessionActive = ref(false)
 const sessionXp = ref(0)
@@ -97,12 +102,14 @@ function startSession() {
   if (verses.value.length === 0) return
   currentVerse.value = verses.value[Math.floor(Math.random() * verses.value.length)]
   sessionXp.value = 0
+  session.reset()
   sessionActive.value = true
 }
 
 function startSessionFor(verse) {
   currentVerse.value = verse
   sessionXp.value = 0
+  session.reset()
   sessionActive.value = true
 }
 
@@ -115,6 +122,7 @@ function onReviewDone() {
 function onDrillDone() {
   sessionXp.value += 50
   addXp(50)
+  if (currentVerse.value) updateDrilled(currentVerse.value.ref)
   advance()
 }
 
@@ -188,6 +196,7 @@ function endSession() {
 }
 
 .path-node {
+  position: relative;
   width: 64px;
   height: 64px;
   border-radius: 50%;
@@ -214,6 +223,27 @@ function endSession() {
   color: #9ca3af;
   text-align: center;
   max-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.note-badge { font-size: 12px; }
+
+.path-node.drilled {
+  background: #3d8f00;
+  border-color: #2d6b00;
+}
+
+.node-check {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #a3e635;
+  line-height: 1;
 }
 
 .start-bar {

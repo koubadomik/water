@@ -1,7 +1,7 @@
 <template>
   <AppShell v-model="activeTab">
     <template #default>
-      <TopBar :streak="streak" :xp="xp" />
+      <TopBar :streak="streak" :xp="xp" :weekly-progress="weeklyProgress" />
 
       <main class="main">
         <HomeView    v-if="activeTab === 'home'"    />
@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import AppShell   from './components/AppShell.vue'
 import TopBar     from './components/TopBar.vue'
 import HomeView   from './views/HomeView.vue'
@@ -24,7 +24,8 @@ import MoreView   from './views/MoreView.vue'
 import { useProgress } from './composables/useProgress.js'
 
 const activeTab = ref('home')
-const { streak, xp } = useProgress()
+const { streak, xp, state: progressState } = useProgress()
+const weeklyProgress = computed(() => progressState.value.weeklyProgress ?? {})
 </script>
 
 <style>

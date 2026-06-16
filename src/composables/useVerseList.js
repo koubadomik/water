@@ -27,5 +27,9 @@ export function useVerseList() {
     list.value = list.value.map(v => v.ref === ref ? { ...v, note } : v)
   }
 
-  return { verses, addVerse, removeVerse, hasVerse, updateNote }
+  function updateDrilled(ref) {
+    list.value = list.value.map(v => v.ref === ref ? { ...v, drilledAt: new Date().toISOString() } : v)
+  }
+
+  return { verses, addVerse, removeVerse, hasVerse, updateNote, updateDrilled }
 }

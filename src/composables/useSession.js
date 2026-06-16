@@ -18,5 +18,11 @@ export function useSession() {
     xp.value += amount
   }
 
-  return { phase, xp, advance, addXp }
+  function reset() {
+    phaseIndex.value = 0
+    phase.value = PHASES[0]
+    xp.value = 0
+  }
+
+  return { phase, xp, advance, addXp, reset }
 }

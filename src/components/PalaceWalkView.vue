@@ -11,9 +11,14 @@
       </div>
     </div>
 
-    <button data-testid="next" class="btn-next" @click="onNext">
-      {{ isLast ? 'Done' : 'Next' }}
-    </button>
+    <div class="btn-row">
+      <button v-if="current > 0" data-testid="back" class="btn-back" @click="onBack">
+        ← Back
+      </button>
+      <button data-testid="next" class="btn-next" @click="onNext">
+        {{ isLast ? 'Done' : 'Next' }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -29,6 +34,12 @@ const emit = defineEmits(['done'])
 const current = ref(0)
 const verse = computed(() => props.verses[current.value])
 const isLast = computed(() => current.value === props.verses.length - 1)
+
+function onBack() {
+  if (current.value > 0) {
+    current.value--
+  }
+}
 
 function onNext() {
   if (isLast.value) {
@@ -100,9 +111,27 @@ function onNext() {
   font-style: italic;
 }
 
-.btn-next {
+.btn-row {
+  display: flex;
+  gap: 12px;
   width: 100%;
   max-width: 320px;
+}
+
+.btn-back {
+  padding: 16px;
+  background: #1f2937;
+  color: #9ca3af;
+  font-size: 16px;
+  font-weight: 700;
+  border: 2px solid #374151;
+  border-radius: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-next {
+  flex: 1;
   padding: 16px;
   background: #58cc02;
   color: #fff;

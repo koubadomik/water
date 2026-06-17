@@ -47,5 +47,9 @@ export function useVerseList() {
     list.value = next
   }
 
-  return { verses, addVerse, removeVerse, hasVerse, updateNote, updateDrilled, moveUp, moveDown }
+  function setVerses(arr) {
+    list.value = arr
+  }
+
+  return { verses, addVerse, removeVerse, hasVerse, updateNote, updateDrilled, moveUp, moveDown, setVerses }
 }

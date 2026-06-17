@@ -35,13 +35,7 @@
           :disabled="selectedVerse.verseIdx >= chapterVerses.length - 1"
           @click="nextVerse"
         >›</button>
-        <button
-          class="add-btn"
-          :class="{ added: hasVerse(selectedVerse.ref) }"
-          @click="toggleVerse"
-        >
-          {{ hasVerse(selectedVerse.ref) ? '✓ Saved' : '+ Add' }}
-        </button>
+        <span v-if="hasVerse(selectedVerse.ref)" class="in-path-badge">In path</span>
       </div>
 
       <div class="verse-card">
@@ -152,7 +146,7 @@ import { useVerseList } from '../composables/useVerseList.js'
 import { usePalaceNotes } from '../composables/usePalaceNotes.js'
 
 const { bible, loading, error, reload } = useBible()
-const { hasVerse, addVerse, removeVerse, updateNote } = useVerseList()
+const { hasVerse } = useVerseList()
 const { getNote, setNote } = usePalaceNotes()
 
 const selectedBook = ref(null)
@@ -215,17 +209,6 @@ function openVerseFromSearch(r) {
   noteInput.value = getNote(r.book, r.chapter, r.verseIdx)
 }
 
-function toggleVerse() {
-  if (!selectedVerse.value) return
-  const v = selectedVerse.value
-  if (hasVerse(v.ref)) {
-    if (!confirm(`Remove ${v.ref} from your list?`)) return
-    removeVerse(v.ref)
-  } else {
-    addVerse({ ref: v.ref, text: v.text, note: noteInput.value, book: v.book, chapter: v.chapter, verseIdx: v.verseIdx })
-  }
-}
-
 function prevVerse() {
   if (!selectedVerse.value || selectedVerse.value.verseIdx === 0) return
   const idx = selectedVerse.value.verseIdx - 1
@@ -242,7 +225,6 @@ function saveNote() {
   if (!selectedVerse.value) return
   const v = selectedVerse.value
   setNote(v.book, v.chapter, v.verseIdx, noteInput.value)
-  if (hasVerse(v.ref)) updateNote(v.ref, noteInput.value)
 }
 
 function onFileUpload(e) {
@@ -398,21 +380,13 @@ function onFileUpload(e) {
   cursor: default;
 }
 
-.add-btn {
-  background: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 20px;
-  color: #f9fafb;
-  font-size: 13px;
+.in-path-badge {
+  font-size: 11px;
   font-weight: 600;
-  padding: 6px 14px;
-  cursor: pointer;
-}
-
-.add-btn.added {
-  background: #14532d;
-  border-color: #58cc02;
   color: #58cc02;
+  background: #14532d;
+  border-radius: 20px;
+  padding: 4px 10px;
 }
 
 .verse-card {

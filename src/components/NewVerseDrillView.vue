@@ -13,12 +13,15 @@
       <button data-testid="continue" class="btn" @click="next">Got it</button>
     </template>
 
-    <!-- SYMBOLIC -->
+    <!-- SYMBOLIC — show emoji above each word -->
     <template v-else-if="step === 'symbolic'">
       <div class="card">
         <div class="ref">{{ verse.ref }}</div>
-        <div class="words">
-          <span v-for="w in words" :key="w" class="word">{{ w }}</span>
+        <div class="sym-words">
+          <div v-for="w in words" :key="w" class="sym-cell">
+            <span class="sym-emoji">{{ getEmoji(w) }}</span>
+            <span class="sym-word">{{ w }}</span>
+          </div>
         </div>
       </div>
       <button data-testid="continue" class="btn" @click="next">Continue</button>
@@ -46,7 +49,7 @@
       <div class="card">
         <div class="text">{{ gappedText }}</div>
         <template v-if="!feedback">
-          <input type="text" v-model="answer" class="input" placeholder="Type the missing word…" />
+          <input type="text" v-model="answer" class="input" placeholder="Type the missing word…" @keydown.enter="checkMissing" />
         </template>
         <div v-else data-testid="feedback" :class="correct ? 'correct' : 'incorrect'">
           {{ correct ? 'Correct!' : `It was: "${missingWord}"` }}
@@ -82,12 +85,12 @@
     <template v-else-if="step === 'full-recall'">
       <div class="card">
         <div class="ref">{{ verse.ref }}</div>
-        <textarea v-if="!feedback" v-model="answer" class="textarea" rows="4" placeholder="Type the whole verse…" />
+        <textarea v-if="!feedback" v-model="answer" class="textarea" rows="4" placeholder="Type the whole verse…" @keydown.ctrl.enter="checkRecall" />
         <template v-if="feedback">
           <div data-testid="feedback" :class="correct ? 'correct' : 'incorrect'">
             {{ correct ? 'Excellent!' : 'Keep going!' }}
           </div>
-          <div class="text">{{ verse.text }}</div>
+          <div class="diff-output" v-html="recallDiff" />
         </template>
       </div>
       <button data-testid="continue" class="btn" @click="feedback ? next() : checkRecall()">
@@ -108,6 +111,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useStorage } from '../composables/useStorage.js'
 
 const props = defineProps({
   verse: { type: Object, required: true },
@@ -126,19 +130,25 @@ const LABELS = {
   'palace-note': 'Palace Note',
 }
 
+const emojiMap = useStorage('userCustomEmojis', {})
+
 const stepIdx = ref(0)
 const step = computed(() => STEPS[stepIdx.value])
 const stepLabel = computed(() => LABELS[step.value])
 
-// shared state reset per step
 const answer = ref('')
 const feedback = ref(false)
 const correct = ref(false)
+const recallDiff = ref('')
+const tapped = ref(null)
+const built = ref([])
+const used = ref([])
 
 function next() {
   answer.value = ''
   feedback.value = false
   correct.value = false
+  recallDiff.value = ''
   tapped.value = null
   built.value = []
   used.value = []
@@ -149,8 +159,12 @@ function next() {
   }
 }
 
-// Computed helpers
 const words = computed(() => props.verse.text.split(' '))
+
+function getEmoji(word) {
+  const key = word.toLowerCase().replace(/[^a-z]/g, '')
+  return emojiMap.value[key] || ''
+}
 
 // --- SCRAMBLE ---
 function shuffle(arr) {
@@ -162,8 +176,6 @@ function shuffle(arr) {
   return a
 }
 const scrambled = computed(() => shuffle(words.value))
-const built = ref([])
-const used = ref([])
 
 function pick(i) {
   built.value.push(scrambled.value[i])
@@ -189,7 +201,6 @@ const errorWords = computed(() => {
   ws[errorIdx.value] = ws[errorIdx.value] + 's'
   return ws
 })
-const tapped = ref(null)
 const spotOk = ref(false)
 
 function tapWord(i) {
@@ -208,8 +219,30 @@ function normalize(s) {
   return s.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '')
 }
 
+function buildDiff(target, attempt) {
+  const tw = target.split(' ')
+  const aw = attempt.trim().split(/\s+/).filter(Boolean)
+  let html = ''
+  const len = Math.max(tw.length, aw.length)
+  for (let i = 0; i < len; i++) {
+    const t = tw[i] || ''
+    const a = aw[i] || ''
+    if (!a) {
+      html += `<span class="d-missing">[${t}]</span> `
+    } else if (normalize(a) === normalize(t)) {
+      html += `<span class="d-correct">${a}</span> `
+    } else if (!t) {
+      html += `<span class="d-extra">${a}</span> `
+    } else {
+      html += `<span class="d-wrong">${a}</span><span class="d-expected">(${t})</span> `
+    }
+  }
+  return html.trim()
+}
+
 function checkRecall() {
   correct.value = normalize(answer.value) === normalize(props.verse.text)
+  recallDiff.value = buildDiff(props.verse.text, answer.value)
   feedback.value = true
 }
 
@@ -263,20 +296,35 @@ function saveNote() {
   color: #f9fafb;
 }
 
-.words {
+/* Symbolic step */
+.sym-words {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 10px;
 }
 
-.word {
+.sym-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.sym-emoji {
+  font-size: 20px;
+  min-height: 24px;
+  line-height: 1;
+}
+
+.sym-word {
   background: #374151;
   border-radius: 6px;
   padding: 4px 8px;
-  font-size: 16px;
+  font-size: 15px;
   color: #f9fafb;
 }
 
+/* Scramble */
 .built {
   font-size: 16px;
   color: #d1d5db;
@@ -284,11 +332,7 @@ function saveNote() {
   line-height: 1.5;
 }
 
-.scramble-words {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+.scramble-words { display: flex; flex-wrap: wrap; gap: 8px; }
 
 .word-btn {
   background: #374151;
@@ -300,11 +344,9 @@ function saveNote() {
   cursor: pointer;
 }
 
-.word-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
+.word-btn:disabled { opacity: 0.3; cursor: default; }
 
+/* Inputs */
 .input {
   width: 100%;
   background: #111827;
@@ -333,6 +375,7 @@ function saveNote() {
 
 .textarea:focus { border-color: #58cc02; }
 
+/* Spot error */
 .word-tap {
   cursor: pointer;
   border-radius: 4px;
@@ -341,16 +384,26 @@ function saveNote() {
 }
 
 .word-tap.selected { background: #374151; }
-.word-tap.wrong     { background: #ff4b4b44; color: #ff4b4b; }
-.word-tap.right     { opacity: 0.5; }
+.word-tap.wrong    { background: #ff4b4b44; color: #ff4b4b; }
+.word-tap.right    { opacity: 0.5; }
+
+/* Diff output */
+.diff-output {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #d1d5db;
+}
+
+.diff-output :deep(.d-correct)  { color: #58cc02; }
+.diff-output :deep(.d-wrong)    { color: #ff4b4b; text-decoration: line-through; }
+.diff-output :deep(.d-missing)  { color: #f59e0b; }
+.diff-output :deep(.d-extra)    { color: #9ca3af; font-style: italic; }
+.diff-output :deep(.d-expected) { color: #6b7280; font-size: 12px; margin-left: 1px; }
 
 .correct   { color: #58cc02; font-weight: 700; font-size: 15px; }
 .incorrect { color: #ff4b4b; font-weight: 700; font-size: 15px; }
 
-.label {
-  font-size: 14px;
-  color: #9ca3af;
-}
+.label { font-size: 14px; color: #9ca3af; }
 
 .btn {
   width: 100%;

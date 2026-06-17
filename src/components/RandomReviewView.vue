@@ -15,10 +15,10 @@
 
     <template v-else>
       <div data-testid="feedback" class="feedback">
-        <div class="feedback-label" :class="correct ? 'correct' : 'incorrect'">
+        <div class="feedback-label" :class="correct ? 'label-correct' : 'label-incorrect'">
           {{ correct ? 'Great recall!' : 'Keep practicing' }}
         </div>
-        <div class="answer-text">{{ current.text }}</div>
+        <div class="diff-output" v-html="diffHtml" />
       </div>
       <button data-testid="continue" class="btn" @click="onContinue">
         {{ isLast ? 'Done' : 'Next verse' }}
@@ -42,6 +42,7 @@ const idx = ref(0)
 const answer = ref('')
 const submitted = ref(false)
 const correct = ref(false)
+const diffHtml = ref('')
 
 const current = computed(() => props.verses[idx.value])
 const isLast = computed(() => idx.value === props.verses.length - 1)
@@ -50,8 +51,30 @@ function normalize(s) {
   return s.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '')
 }
 
+function buildDiff(target, attempt) {
+  const tw = target.split(' ')
+  const aw = attempt.trim().split(/\s+/).filter(Boolean)
+  let html = ''
+  const len = Math.max(tw.length, aw.length)
+  for (let i = 0; i < len; i++) {
+    const t = tw[i] || ''
+    const a = aw[i] || ''
+    if (!a) {
+      html += `<span class="d-missing">[${t}]</span> `
+    } else if (normalize(a) === normalize(t)) {
+      html += `<span class="d-correct">${a}</span> `
+    } else if (!t) {
+      html += `<span class="d-extra">${a}</span> `
+    } else {
+      html += `<span class="d-wrong">${a}</span><span class="d-expected">(${t})</span> `
+    }
+  }
+  return html.trim()
+}
+
 function submit() {
   correct.value = normalize(answer.value) === normalize(current.value.text)
+  diffHtml.value = buildDiff(current.value.text, answer.value)
   submitted.value = true
 }
 
@@ -62,6 +85,7 @@ function onContinue() {
     idx.value++
     answer.value = ''
     submitted.value = false
+    diffHtml.value = ''
   }
 }
 </script>
@@ -76,10 +100,7 @@ function onContinue() {
   flex: 1;
 }
 
-.prompt {
-  font-size: 14px;
-  color: #6b7280;
-}
+.prompt { font-size: 14px; color: #6b7280; }
 
 .verse-ref {
   font-size: 18px;
@@ -110,22 +131,24 @@ function onContinue() {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
-.feedback-label {
-  font-weight: 700;
-  font-size: 15px;
-}
+.feedback-label { font-weight: 700; font-size: 15px; }
+.label-correct  { color: #58cc02; }
+.label-incorrect { color: #ff4b4b; }
 
-.correct   { color: #58cc02; }
-.incorrect { color: #ff4b4b; }
-
-.answer-text {
+.diff-output {
   font-size: 15px;
+  line-height: 1.8;
   color: #d1d5db;
-  line-height: 1.5;
 }
+
+.diff-output :deep(.d-correct)  { color: #58cc02; }
+.diff-output :deep(.d-wrong)    { color: #ff4b4b; text-decoration: line-through; }
+.diff-output :deep(.d-missing)  { color: #f59e0b; }
+.diff-output :deep(.d-extra)    { color: #9ca3af; font-style: italic; }
+.diff-output :deep(.d-expected) { color: #6b7280; font-size: 12px; margin-left: 1px; }
 
 .btn {
   width: 100%;
@@ -140,8 +163,5 @@ function onContinue() {
   cursor: pointer;
 }
 
-.position {
-  font-size: 13px;
-  color: #6b7280;
-}
+.position { font-size: 13px; color: #6b7280; }
 </style>

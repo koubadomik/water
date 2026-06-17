@@ -36,12 +36,24 @@
             v-for="(w, i) in scrambled"
             :key="i"
             class="word-btn"
-            :disabled="used.includes(i)"
+            :disabled="used.includes(i) || feedback"
             @click="pick(i)"
           >{{ w }}</button>
         </div>
+        <div v-if="feedback" data-testid="feedback" :class="scrambleCorrect ? 'correct' : 'incorrect'">
+          {{ scrambleCorrect ? 'Correct!' : 'Keep going!' }}
+        </div>
       </div>
-      <button data-testid="continue" class="btn" @click="next">Skip / Reveal</button>
+      <template v-if="feedback">
+        <button data-testid="continue" class="btn" @click="next">Continue</button>
+      </template>
+      <template v-else-if="built.length > 0">
+        <button data-testid="continue" class="btn" @click="checkScramble">Check</button>
+        <button class="btn btn-secondary" @click="next">Skip</button>
+      </template>
+      <template v-else>
+        <button data-testid="continue" class="btn" @click="next">Skip / Reveal</button>
+      </template>
     </template>
 
     <!-- MISSING WORD -->
@@ -110,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useStorage } from '../composables/useStorage.js'
 
 const props = defineProps({
@@ -175,15 +187,35 @@ function shuffle(arr) {
   }
   return a
 }
-const scrambled = computed(() => shuffle(words.value))
+const scrambled = ref([])
+const scrambleCorrect = ref(false)
+
+watch(step, (s) => {
+  if (s === 'scramble') {
+    scrambled.value = shuffle([...words.value])
+    scrambleCorrect.value = false
+  }
+  if (s === 'missing-word') {
+    missingIdx.value = Math.floor(Math.random() * words.value.length)
+  }
+  if (s === 'spot-error') {
+    errorIdx.value = Math.floor(Math.random() * words.value.length)
+  }
+}, { immediate: false })
 
 function pick(i) {
   built.value.push(scrambled.value[i])
   used.value.push(i)
 }
 
+function checkScramble() {
+  const normalizeScramble = (s) => s.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim()
+  scrambleCorrect.value = normalizeScramble(built.value.join(' ')) === normalizeScramble(props.verse.text)
+  feedback.value = true
+}
+
 // --- MISSING WORD ---
-const missingIdx = computed(() => Math.floor(words.value.length / 2))
+const missingIdx = ref(Math.floor(words.value.length / 2))
 const missingWord = computed(() => words.value[missingIdx.value])
 const gappedText = computed(() =>
   words.value.map((w, i) => (i === missingIdx.value ? '___' : w)).join(' ')
@@ -195,7 +227,7 @@ function checkMissing() {
 }
 
 // --- SPOT ERROR ---
-const errorIdx = computed(() => Math.floor(words.value.length * 0.6))
+const errorIdx = ref(Math.floor(words.value.length * 0.6))
 const errorWords = computed(() => {
   const ws = [...words.value]
   ws[errorIdx.value] = ws[errorIdx.value] + 's'
@@ -416,5 +448,12 @@ function saveNote() {
   border: none;
   border-radius: 12px;
   cursor: pointer;
+}
+
+.btn-secondary {
+  background: #374151;
+  font-size: 14px;
+  padding: 10px;
+  margin-top: -8px;
 }
 </style>

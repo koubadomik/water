@@ -40,7 +40,10 @@
               <template v-else>{{ w }}</template>
             </span>
           </div>
-          <div v-if="bhDone" class="bh-done">✓ Complete!</div>
+          <div v-if="bhDone" class="bh-done">
+            ✓ Complete!
+            <button class="btn-next-verse" @click="nextByHeartVerse">Next verse →</button>
+          </div>
         </div>
 
         <div class="bh-controls">
@@ -242,6 +245,12 @@ function revealNext() {
   }
 }
 
+function nextByHeartVerse() {
+  const idx = verses.value.findIndex(v => v.ref === byHeartVerse.value.ref)
+  const next = verses.value[(idx + 1) % verses.value.length]
+  startByHeart(next)
+}
+
 // --- Drill ---
 const drillVerse = ref(null)
 const drillInput = ref('')
@@ -385,6 +394,21 @@ function clearBibleCache() {
   font-weight: 700;
   font-size: 16px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-next-verse {
+  background: #58cc02;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 20px;
+  cursor: pointer;
 }
 
 .bh-controls {

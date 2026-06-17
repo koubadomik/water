@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import AppShell   from './components/AppShell.vue'
 import TopBar     from './components/TopBar.vue'
 import HomeView   from './views/HomeView.vue'
@@ -23,7 +23,8 @@ import SymbolsView from './views/SymbolsView.vue'
 import MoreView   from './views/MoreView.vue'
 import { useProgress } from './composables/useProgress.js'
 
-const activeTab = ref('home')
+const activeTab = ref(localStorage.getItem('lastTab') ?? 'home')
+watch(activeTab, val => localStorage.setItem('lastTab', val))
 const { streak, xp, state: progressState } = useProgress()
 const weeklyProgress = computed(() => progressState.value.weeklyProgress ?? {})
 </script>

@@ -22,7 +22,19 @@
     <template v-else-if="selectedVerse">
       <div class="detail-header">
         <button class="back-btn" @click="selectedVerse = null">← Back</button>
+        <button
+          v-if="detailSource === 'list'"
+          class="nav-btn"
+          :disabled="selectedVerse.verseIdx === 0"
+          @click="prevVerse"
+        >‹</button>
         <span class="detail-ref">{{ selectedVerse.ref }}</span>
+        <button
+          v-if="detailSource === 'list'"
+          class="nav-btn"
+          :disabled="selectedVerse.verseIdx >= chapterVerses.length - 1"
+          @click="nextVerse"
+        >›</button>
         <button
           class="add-btn"
           :class="{ added: hasVerse(selectedVerse.ref) }"
@@ -146,6 +158,7 @@ const { getNote, setNote } = usePalaceNotes()
 const selectedBook = ref(null)
 const selectedChapter = ref(null)
 const selectedVerse = ref(null)
+const detailSource = ref(null) // 'list' | 'search'
 const noteInput = ref('')
 const query = ref('')
 const showSearch = ref(false)
@@ -192,11 +205,13 @@ function highlight(text, q) {
 function openVerse(idx, text) {
   const ref = `${selectedBook.value} ${selectedChapter.value}:${idx + 1}`
   selectedVerse.value = { ref, text, book: selectedBook.value, chapter: selectedChapter.value, verseIdx: idx }
+  detailSource.value = 'list'
   noteInput.value = getNote(selectedBook.value, selectedChapter.value, idx)
 }
 
 function openVerseFromSearch(r) {
   selectedVerse.value = { ref: r.ref, text: r.text, book: r.book, chapter: r.chapter, verseIdx: r.verseIdx }
+  detailSource.value = 'search'
   noteInput.value = getNote(r.book, r.chapter, r.verseIdx)
 }
 
@@ -204,10 +219,23 @@ function toggleVerse() {
   if (!selectedVerse.value) return
   const v = selectedVerse.value
   if (hasVerse(v.ref)) {
+    if (!confirm(`Remove ${v.ref} from your list?`)) return
     removeVerse(v.ref)
   } else {
     addVerse({ ref: v.ref, text: v.text, note: noteInput.value, book: v.book, chapter: v.chapter, verseIdx: v.verseIdx })
   }
+}
+
+function prevVerse() {
+  if (!selectedVerse.value || selectedVerse.value.verseIdx === 0) return
+  const idx = selectedVerse.value.verseIdx - 1
+  openVerse(idx, chapterVerses.value[idx])
+}
+
+function nextVerse() {
+  if (!selectedVerse.value || selectedVerse.value.verseIdx >= chapterVerses.value.length - 1) return
+  const idx = selectedVerse.value.verseIdx + 1
+  openVerse(idx, chapterVerses.value[idx])
 }
 
 function saveNote() {
@@ -353,6 +381,21 @@ function onFileUpload(e) {
   font-size: 14px;
   cursor: pointer;
   padding: 4px 8px;
+}
+
+.nav-btn {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.nav-btn:disabled {
+  color: #374151;
+  cursor: default;
 }
 
 .add-btn {

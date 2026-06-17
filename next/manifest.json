@@ -1,0 +1,18 @@
+{
+  "name": "VerseMaster",
+  "short_name": "VerseMaster",
+  "description": "Bible verse memorization with memory palace techniques",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#58cc02",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

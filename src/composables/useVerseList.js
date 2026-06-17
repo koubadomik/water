@@ -31,5 +31,21 @@ export function useVerseList() {
     list.value = list.value.map(v => v.ref === ref ? { ...v, drilledAt: new Date().toISOString() } : v)
   }
 
-  return { verses, addVerse, removeVerse, hasVerse, updateNote, updateDrilled }
+  function moveUp(ref) {
+    const idx = list.value.findIndex(v => v.ref === ref)
+    if (idx <= 0) return
+    const next = [...list.value]
+    ;[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]]
+    list.value = next
+  }
+
+  function moveDown(ref) {
+    const idx = list.value.findIndex(v => v.ref === ref)
+    if (idx === -1 || idx >= list.value.length - 1) return
+    const next = [...list.value]
+    ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+    list.value = next
+  }
+
+  return { verses, addVerse, removeVerse, hasVerse, updateNote, updateDrilled, moveUp, moveDown }
 }

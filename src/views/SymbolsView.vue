@@ -26,13 +26,13 @@
 
       <div class="words-grid">
         <div
-          v-for="(word, i) in words"
+          v-for="(item, i) in resolvedWords"
           :key="i"
           class="word-cell"
         >
-          <div class="emoji-display">{{ getEmoji(word) || '·' }}</div>
-          <button class="word-btn" @click="editWord = word; emojiInput = getEmoji(word)">
-            {{ word }}
+          <div class="emoji-display">{{ item.emoji || '·' }}</div>
+          <button class="word-btn" @click="editWord = item.word; emojiInput = item.emoji">
+            {{ item.word }}
           </button>
         </div>
       </div>
@@ -61,9 +61,9 @@
       <div class="preview-section">
         <div class="preview-label">Preview</div>
         <div class="preview-words">
-          <div v-for="(word, i) in words" :key="i" class="preview-cell">
-            <div class="preview-emoji">{{ getEmoji(word) }}</div>
-            <span class="preview-word">{{ word }}</span>
+          <div v-for="(item, i) in resolvedWords" :key="i" class="preview-cell">
+            <div class="preview-emoji">{{ item.emoji }}</div>
+            <span class="preview-word">{{ item.word }}</span>
           </div>
         </div>
       </div>
@@ -83,9 +83,31 @@ const activeVerse = ref(null)
 const editWord = ref(null)
 const emojiInput = ref('')
 
-const words = computed(() => {
+const resolvedWords = computed(() => {
   if (!activeVerse.value) return []
-  return activeVerse.value.text.replace(/[.,;:!?]/g, '').split(' ').filter(Boolean)
+  const raw = activeVerse.value.text.replace(/[.,;:!?]/g, '').split(' ').filter(Boolean)
+  const result = []
+  let i = 0
+  while (i < raw.length) {
+    let matched = false
+    for (let len = 3; len >= 1; len--) {
+      if (i + len > raw.length) continue
+      const phrase = raw.slice(i, i + len).map(w => w.toLowerCase().replace(/[^a-z]/g, '')).join(' ')
+      if (emojiMap.value[phrase]) {
+        result.push({ word: raw[i], phrase, emoji: emojiMap.value[phrase], span: len })
+        for (let j = 1; j < len; j++) result.push({ word: raw[i + j], phrase: null, emoji: '', span: 0 })
+        i += len
+        matched = true
+        break
+      }
+    }
+    if (!matched) {
+      const key = raw[i].toLowerCase().replace(/[^a-z]/g, '')
+      result.push({ word: raw[i], phrase: null, emoji: emojiMap.value[key] || '', span: 1 })
+      i++
+    }
+  }
+  return result
 })
 
 const quickEmojis = ['❤️', '🌍', '✝️', '🙏', '🕊️', '⚡', '🔥', '🌊', '🏔️', '🌿', '👑', '🗝️', '⚔️', '🛡️', '🌟']
@@ -93,11 +115,6 @@ const quickEmojis = ['❤️', '🌍', '✝️', '🙏', '🕊️', '⚡', '🔥
 function loadVerse(v) {
   activeVerse.value = v
   editWord.value = null
-}
-
-function getEmoji(word) {
-  const key = word.toLowerCase().replace(/[^a-z]/g, '')
-  return emojiMap.value[key] || ''
 }
 
 function saveEmoji() {

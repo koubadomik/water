@@ -1,4 +1,7 @@
 <template>
+  <div class="confetti-wrap">
+    <div v-for="p in pieces" :key="p.id" class="confetti-piece" :style="p.style" />
+  </div>
   <div class="celebration">
     <div class="trophy">🏆</div>
     <h2 class="title">Session Complete!</h2>
@@ -21,15 +24,54 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+
 defineProps({
   xp:     { type: Number, default: 0 },
   streak: { type: Number, default: 0 },
 })
 
 const emit = defineEmits(['done'])
+
+const pieces = ref([])
+onMounted(() => {
+  const colors = ['#58cc02', '#ffd700', '#ff6b6b', '#4fc3f7', '#ce93d8', '#ffb74d']
+  pieces.value = Array.from({ length: 40 }, (_, i) => ({
+    id: i,
+    style: {
+      left: Math.random() * 100 + 'vw',
+      width: (6 + Math.random() * 6) + 'px',
+      height: (6 + Math.random() * 6) + 'px',
+      background: colors[Math.floor(Math.random() * colors.length)],
+      animationDuration: (0.8 + Math.random() * 0.8) + 's',
+      animationDelay: (Math.random() * 0.5) + 's',
+    }
+  }))
+})
 </script>
 
 <style scoped>
+.confetti-wrap {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+}
+
 .celebration {
   display: flex;
   flex-direction: column;

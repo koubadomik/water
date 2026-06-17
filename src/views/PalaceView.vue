@@ -92,8 +92,16 @@
       <!-- Book picker -->
       <div v-else-if="!selectedBook" class="list">
         <div class="list-header">Books</div>
+        <div class="book-search-bar">
+          <input
+            v-model="bookSearch"
+            class="book-search-input"
+            placeholder="Search books…"
+            type="search"
+          />
+        </div>
         <button
-          v-for="book in books"
+          v-for="book in filteredBooks"
           :key="book"
           class="list-item"
           @click="selectedBook = book; selectedChapter = null"
@@ -113,34 +121,45 @@
             v-for="n in chapterCount"
             :key="n"
             class="chapter-btn"
-            @click="selectedChapter = n"
+            @click="selectChapter(n)"
           >{{ n }}</button>
         </div>
       </div>
 
-      <!-- Verse list -->
+      <!-- Chapter bulk view -->
       <div v-else class="list">
-        <div class="list-header">
+        <div class="list-header chapter-bulk-header">
           <button class="back-btn" @click="selectedChapter = null">← {{ selectedBook }}</button>
-          Chapter {{ selectedChapter }}
+          <span>Chapter {{ selectedChapter }}</span>
+          <button class="save-all-btn" @click="saveAllNotes">Save All</button>
         </div>
-        <button
+        <div
           v-for="(text, idx) in chapterVerses"
           :key="idx"
-          class="verse-item"
-          @click="openVerse(idx, text)"
+          class="verse-block"
         >
-          <span class="verse-num">{{ idx + 1 }}</span>
-          <span class="verse-preview">{{ text.slice(0, 80) }}{{ text.length > 80 ? '…' : '' }}</span>
-          <span v-if="hasVerse(`${selectedBook} ${selectedChapter}:${idx + 1}`)" class="saved-dot">●</span>
-        </button>
+          <div class="verse-block-header">
+            <span class="verse-num">{{ idx + 1 }}</span>
+            <span v-if="hasVerse(`${selectedBook} ${selectedChapter}:${idx + 1}`)" class="saved-dot">●</span>
+            <button class="detail-btn" @click="openVerse(idx, text)">Detail →</button>
+          </div>
+          <div class="verse-block-text">{{ text }}</div>
+          <textarea
+            v-model="chapterNotes[idx]"
+            class="verse-block-note"
+            rows="2"
+            placeholder="Memory note…"
+            @blur="autoSaveNote(idx)"
+          />
+        </div>
+        <div v-if="savedFeedback" class="save-feedback">✓ Saved</div>
       </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useBible, bookNames, getChapter } from '../composables/useBible.js'
 import { useVerseList } from '../composables/useVerseList.js'
 import { usePalaceNotes } from '../composables/usePalaceNotes.js'
@@ -156,8 +175,16 @@ const detailSource = ref(null) // 'list' | 'search'
 const noteInput = ref('')
 const query = ref('')
 const showSearch = ref(false)
+const bookSearch = ref('')
+const chapterNotes = ref({})
+const savedFeedback = ref(false)
 
 const books = computed(() => bookNames(bible.value))
+const filteredBooks = computed(() => {
+  const q = bookSearch.value.trim().toLowerCase()
+  if (!q) return books.value
+  return books.value.filter(b => b.toLowerCase().includes(q))
+})
 
 const chapterCount = computed(() => {
   if (!bible.value || !selectedBook.value) return 0
@@ -194,6 +221,32 @@ const searchResults = computed(() => {
 function highlight(text, q) {
   const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
+}
+
+function selectChapter(n) {
+  selectedChapter.value = n
+  // load notes for this chapter
+  const notes = {}
+  const verses = getChapter(bible.value, selectedBook.value, n)
+  for (let i = 0; i < verses.length; i++) {
+    notes[i] = getNote(selectedBook.value, n, i)
+  }
+  chapterNotes.value = notes
+}
+
+function autoSaveNote(idx) {
+  if (!selectedBook.value || !selectedChapter.value) return
+  setNote(selectedBook.value, selectedChapter.value, idx, chapterNotes.value[idx] || '')
+}
+
+function saveAllNotes() {
+  if (!selectedBook.value || !selectedChapter.value) return
+  const count = chapterVerses.value.length
+  for (let i = 0; i < count; i++) {
+    setNote(selectedBook.value, selectedChapter.value, i, chapterNotes.value[i] || '')
+  }
+  savedFeedback.value = true
+  setTimeout(() => { savedFeedback.value = false }, 1500)
 }
 
 function openVerse(idx, text) {
@@ -430,6 +483,93 @@ function onFileUpload(e) {
 }
 
 .note-input:focus { border-color: #58cc02; }
+
+.book-search-bar {
+  padding: 8px 12px;
+  border-bottom: 1px solid #1f2937;
+  background: #111827;
+}
+
+.book-search-input {
+  width: 100%;
+  background: #1f2937;
+  border: none;
+  border-radius: 8px;
+  color: #f9fafb;
+  font-size: 14px;
+  padding: 8px 12px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.book-search-input::placeholder { color: #6b7280; }
+
+.chapter-bulk-header {
+  justify-content: space-between;
+}
+
+.save-all-btn {
+  background: #58cc02;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.verse-block {
+  border-bottom: 1px solid #1f2937;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.verse-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #58cc02;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.verse-block-text {
+  font-size: 14px;
+  color: #d1d5db;
+  line-height: 1.5;
+}
+
+.verse-block-note {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  color: #f9fafb;
+  font-size: 13px;
+  padding: 8px 10px;
+  resize: none;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.verse-block-note:focus { border-color: #58cc02; }
+
+.save-feedback {
+  padding: 12px;
+  text-align: center;
+  color: #58cc02;
+  font-weight: 700;
+  font-size: 14px;
+}
 
 .list { display: flex; flex-direction: column; }
 

@@ -15,10 +15,12 @@
       <div
         v-for="day in weekDays"
         :key="day.str"
-        class="day-dot"
-        :class="{ done: day.done, today: day.isToday }"
+        class="day-col"
         :title="day.str"
-      />
+      >
+        <div class="day-dot" :class="{ done: day.done, today: day.isToday }" />
+        <span class="day-label">{{ day.label }}</span>
+      </div>
     </div>
   </header>
 </template>
@@ -45,7 +47,8 @@ const weekDays = computed(() => {
     const d = new Date(monday)
     d.setDate(monday.getDate() + i)
     const str = d.toISOString().split('T')[0]
-    days.push({ str, done: !!props.weeklyProgress[str], isToday: str === todayStr })
+    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+    days.push({ str, done: !!props.weeklyProgress[str], isToday: str === todayStr, label: labels[i] })
   }
   return days
 })
@@ -81,8 +84,15 @@ const weekDays = computed(() => {
 .week-row {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
   padding: 2px 0;
+}
+
+.day-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
 }
 
 .day-dot {
@@ -105,5 +115,13 @@ const weekDays = computed(() => {
 
 .day-dot.today.done {
   box-shadow: 0 0 0 2px #14532d;
+}
+
+.day-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 </style>

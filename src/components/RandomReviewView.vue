@@ -72,8 +72,20 @@ function buildDiff(target, attempt) {
   return html.trim()
 }
 
+function similarity(attempt, target) {
+  const aw = normalize(attempt).split(/\s+/).filter(Boolean)
+  const tw = normalize(target).split(/\s+/).filter(Boolean)
+  if (tw.length === 0) return 1
+  let matches = 0
+  const len = Math.max(aw.length, tw.length)
+  for (let i = 0; i < tw.length; i++) {
+    if (aw[i] === tw[i]) matches++
+  }
+  return matches / len
+}
+
 function submit() {
-  correct.value = normalize(answer.value) === normalize(current.value.text)
+  correct.value = similarity(answer.value, current.value.text) >= 0.8
   diffHtml.value = buildDiff(current.value.text, answer.value)
   submitted.value = true
 }

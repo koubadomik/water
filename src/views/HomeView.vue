@@ -4,8 +4,15 @@
     <div v-if="verses.length === 0" class="empty">
       <div class="empty-icon">📖</div>
       <h2>No verses yet</h2>
-      <p>Go to the <strong>Palace</strong> tab to browse the Bible and add verses to your list.</p>
+      <p>Browse the <strong>Palace</strong> tab to find and save verses. If you used the previous app, your memory palace notes are still intact — just re-add your verses to see them.</p>
     </div>
+
+    <!-- Skip button during active session -->
+    <button
+      v-if="sessionActive && phase !== 'celebration'"
+      class="btn-skip"
+      @click="advance"
+    >Skip ›</button>
 
     <!-- Session in progress -->
     <template v-else-if="sessionActive">
@@ -58,6 +65,11 @@
             {{ verse.ref }}
             <span v-if="verse.note || palaceNote(verse)" class="note-badge">📝</span>
           </div>
+          <button
+            class="btn-delete-verse"
+            :aria-label="'Remove ' + verse.ref"
+            @click="confirmRemove(verse)"
+          >×</button>
         </div>
       </div>
 
@@ -81,7 +93,7 @@ import { useProgress } from '../composables/useProgress.js'
 import { useSession } from '../composables/useSession.js'
 import { usePalaceNotes } from '../composables/usePalaceNotes.js'
 
-const { verses, updateDrilled, updateNote, moveUp, moveDown } = useVerseList()
+const { verses, updateDrilled, updateNote, moveUp, moveDown, removeVerse } = useVerseList()
 const { streak, completeSession } = useProgress()
 const session = useSession()
 const { phase, advance, addXp } = session
@@ -145,6 +157,12 @@ function onDrillDone(payload) {
   advance()
 }
 
+function confirmRemove(verse) {
+  if (confirm('Remove ' + verse.ref + ' from your list?')) {
+    removeVerse(verse.ref)
+  }
+}
+
 function endSession() {
   completeSession(sessionXp.value)
   sessionActive.value = false
@@ -157,6 +175,7 @@ function endSession() {
   flex-direction: column;
   flex: 1;
   overflow-y: auto;
+  position: relative;
 }
 
 .empty {
@@ -308,5 +327,40 @@ function endSession() {
   border-radius: 14px;
   cursor: pointer;
   box-shadow: 0 4px 0 #3d8f00;
+}
+
+.btn-skip {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #4b5563;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  z-index: 10;
+}
+
+.btn-skip:hover {
+  color: #9ca3af;
+}
+
+.btn-delete-verse {
+  position: absolute;
+  right: -36px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #4b5563;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.btn-delete-verse:hover {
+  color: #ef4444;
 }
 </style>

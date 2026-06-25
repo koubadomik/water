@@ -1,5 +1,6 @@
 <template>
   <div class="review">
+    <div v-if="current.isWildcard" class="wildcard-badge">📚 From history</div>
     <div class="prompt">Type this verse from memory:</div>
     <div class="verse-ref">{{ current.ref }}</div>
 
@@ -113,6 +114,7 @@ function onContinue() {
 }
 
 .prompt { font-size: 14px; color: #6b7280; }
+.wildcard-badge { font-size: 12px; font-weight: 700; color: #58cc02; background: #14532d; border-radius: 20px; padding: 4px 10px; }
 
 .verse-ref {
   font-size: 18px;

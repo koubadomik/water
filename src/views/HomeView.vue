@@ -45,21 +45,6 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Intensity</label>
-            <div class="intensity-row">
-              <button
-                v-for="opt in intensityOptions"
-                :key="opt.value"
-                class="intensity-btn"
-                :class="{ active: goalIntensity === opt.value }"
-                @click="goalIntensity = opt.value"
-              >
-                <span class="int-label">{{ opt.label }}</span>
-                <span class="int-desc">{{ opt.desc }}</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         <div class="goal-footer">
@@ -92,9 +77,15 @@
         :verses="reviewVerses"
         @done="onReviewDone"
       />
+      <FinalMasteryTestView
+        v-else-if="masteryTestActive"
+        :verses="uniquePathVerses"
+        @done="onMasteryDone"
+      />
       <NewVerseDrillView
         v-else-if="phase === 'new-verse-drill'"
         :verse="currentVerse"
+        :lesson-index="currentVerse?.lessonIndex ?? 0"
         @done="onDrillDone"
       />
       <CelebrationView
@@ -126,12 +117,23 @@
             <button class="reorder-btn" :disabled="i === 0" @click="moveUp(verse.ref)">▲</button>
             <button class="reorder-btn" :disabled="i === verses.length - 1" @click="moveDown(verse.ref)">▼</button>
           </div>
-          <button class="path-node" :class="{ drilled: verse.drilledAt }" @click="startSessionFor(verse)">
+          <button
+            class="path-node"
+            :class="{
+              drilled: verse.drilledAt,
+              active: i === activeNodeIdx,
+              locked: i > activeNodeIdx && !verse.drilledAt
+            }"
+            :disabled="i > activeNodeIdx && !verse.drilledAt"
+            @click="startSessionFor(verse)"
+          >
             <span class="node-num">{{ i + 1 }}</span>
             <span v-if="verse.drilledAt" class="node-check">✓</span>
+            <span v-else-if="i > activeNodeIdx" class="node-lock">🔒</span>
           </button>
           <div class="node-label">
             {{ verse.ref }}
+            <span class="rep-badge">×{{ (verse.lessonIndex ?? 0) + 1 }}</span>
             <span v-if="verse.note || palaceNote(verse)" class="note-badge">📝</span>
           </div>
           <button class="btn-delete-verse" :aria-label="'Remove ' + verse.ref" @click="confirmRemove(verse)">×</button>
@@ -152,11 +154,13 @@ import PalaceWalkView from '../components/PalaceWalkView.vue'
 import RandomReviewView from '../components/RandomReviewView.vue'
 import NewVerseDrillView from '../components/NewVerseDrillView.vue'
 import CelebrationView from '../components/CelebrationView.vue'
+import FinalMasteryTestView from '../components/FinalMasteryTestView.vue'
 import { useVerseList } from '../composables/useVerseList.js'
 import { useProgress } from '../composables/useProgress.js'
 import { useSession } from '../composables/useSession.js'
 import { usePalaceNotes } from '../composables/usePalaceNotes.js'
 import { useBible, bookNames, getChapter } from '../composables/useBible.js'
+import { useHistory } from '../composables/useHistory.js'
 
 const { verses, updateDrilled, updateNote, moveUp, moveDown, removeVerse, setVerses } = useVerseList()
 const { streak, completeSession } = useProgress()
@@ -164,6 +168,7 @@ const session = useSession()
 const { phase, advance, addXp } = session
 const { getNote, setNote } = usePalaceNotes()
 const { bible, loading: bibleLoading, error: bibleError } = useBible()
+const { history, saveCompletedPath } = useHistory()
 
 // --- Goal setup ---
 const savedGoal = (() => {
@@ -175,13 +180,8 @@ const goalBook = ref(savedGoal?.book ?? '')
 const goalChapter = ref(savedGoal?.chapter ?? 1)
 const goalStartVerse = ref(savedGoal?.startVerse ?? 1)
 const goalEndVerse = ref(savedGoal?.endVerse ?? 1)
-const goalIntensity = ref(savedGoal?.intensity ?? 3)
 
-const intensityOptions = [
-  { value: 1, label: 'Fast',         desc: '1× per verse' },
-  { value: 3, label: 'Rigorous',     desc: '3× per verse' },
-  { value: 5, label: 'Deep Mastery', desc: '5× per verse' },
-]
+const INTENSITY = 3
 
 const allBooks = computed(() => bookNames(bible.value))
 
@@ -219,28 +219,29 @@ function generatePath() {
   for (let vi = start - 1; vi <= end - 1; vi++) {
     const text = ch[vi]
     if (!text) continue
-    for (let rep = 0; rep < goalIntensity.value; rep++) {
+    for (let rep = 0; rep < INTENSITY; rep++) {
       newVerses.push({
         ref: `${goalBook.value} ${goalChapter.value}:${vi + 1}`,
         text,
         book: goalBook.value,
         chapter: goalChapter.value,
         verseIdx: vi,
+        lessonIndex: rep,
       })
     }
   }
   if (newVerses.length === 0) return alert('No verses found in that range.')
   setVerses(newVerses)
-  const meta = {
-    book: goalBook.value, chapter: goalChapter.value,
-    startVerse: start, endVerse: end, intensity: goalIntensity.value,
-  }
+  const meta = { book: goalBook.value, chapter: goalChapter.value, startVerse: start, endVerse: end }
   localStorage.setItem('goalMeta', JSON.stringify(meta))
   showGoalSetup.value = false
 }
 
 function confirmChangeGoal() {
-  if (confirm('Set a new goal? Your current progress badges will be kept but the verse list will be replaced.')) {
+  if (confirm('Set a new goal? Your current progress will be saved to History.')) {
+    if (verses.value.some(v => v.drilledAt)) {
+      saveCompletedPath(savedGoal, verses.value, sessionXp.value)
+    }
     showGoalSetup.value = true
   }
 }
@@ -249,26 +250,52 @@ function confirmChangeGoal() {
 const sessionActive = ref(false)
 const sessionXp = ref(0)
 const currentVerse = ref(null)
+const masteryTestActive = ref(false)
 
 function palaceNote(verse) {
   if (!verse.book) return ''
   return getNote(verse.book, verse.chapter, verse.verseIdx)
 }
 
-const sessionVerses = computed(() => verses.value.map(v => ({
+const uniquePathVerses = computed(() => {
+  const seen = new Set()
+  return verses.value.filter(v => {
+    if (seen.has(v.ref)) return false
+    seen.add(v.ref)
+    return true
+  })
+})
+
+const activeNodeIdx = computed(() => {
+  const idx = verses.value.findIndex(v => !v.drilledAt)
+  return idx === -1 ? verses.value.length - 1 : idx
+})
+
+const sessionVerses = computed(() => verses.value.filter(v => v.drilledAt).map(v => ({
   ref: v.ref,
   text: v.text,
   note: (v.book ? getNote(v.book, v.chapter, v.verseIdx) : '') || v.note || '',
 })))
 
 const reviewVerses = computed(() => {
-  const shuffled = [...verses.value].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, Math.min(2, shuffled.length))
+  const drilled = verses.value.filter(v => v.drilledAt)
+  if (drilled.length === 0) return verses.value.slice(0, 1)
+  const shuffled = [...drilled].sort(() => Math.random() - 0.5)
+  const picked = shuffled.slice(0, Math.min(2, shuffled.length))
+  // 1-in-5 wildcard from history
+  if (Math.random() < 0.2 && history.value.length > 0) {
+    const entry = history.value[Math.floor(Math.random() * history.value.length)]
+    if (entry.verses?.length > 0) {
+      const v = entry.verses[Math.floor(Math.random() * entry.verses.length)]
+      if (v) picked[0] = { ...v, isWildcard: true }
+    }
+  }
+  return picked
 })
 
 function startSession() {
   if (verses.value.length === 0) return
-  currentVerse.value = verses.value[Math.floor(Math.random() * verses.value.length)]
+  currentVerse.value = verses.value[activeNodeIdx.value]
   sessionXp.value = 0
   session.reset()
   sessionActive.value = true
@@ -299,7 +326,28 @@ function onDrillDone(payload) {
       if (v.book) setNote(v.book, v.chapter, v.verseIdx, note)
     }
   }
-  advance()
+  // Check if all nodes are now drilled — trigger mastery test
+  if (verses.value.every(x => x.drilledAt || x.ref === v?.ref)) {
+    masteryTestActive.value = true
+  } else {
+    advance()
+  }
+}
+
+function onMasteryDone({ action, failedVerses }) {
+  completeSession(sessionXp.value)
+  if (action === 'new') {
+    saveCompletedPath(savedGoal, verses.value, sessionXp.value)
+    setVerses([])
+    localStorage.removeItem('goalMeta')
+    showGoalSetup.value = true
+  } else if (action === 'extend') {
+    const newNodes = failedVerses.map(v => ({ ...v, drilledAt: undefined, lessonIndex: 0 }))
+    setVerses([...verses.value, ...newNodes])
+  }
+  masteryTestActive.value = false
+  sessionActive.value = false
+  session.reset()
 }
 
 function confirmRemove(verse) {
@@ -396,40 +444,6 @@ function endSession() {
   gap: 10px;
 }
 
-.intensity-row {
-  display: flex;
-  gap: 8px;
-}
-
-.intensity-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  background: #111827;
-  border: 2px solid #374151;
-  border-radius: 12px;
-  padding: 10px 4px;
-  cursor: pointer;
-  transition: border-color 0.15s;
-}
-
-.intensity-btn.active {
-  border-color: #58cc02;
-  background: #14532d;
-}
-
-.int-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: #f9fafb;
-}
-
-.int-desc {
-  font-size: 11px;
-  color: #6b7280;
-}
 
 .goal-footer {
   display: flex;
@@ -570,6 +584,35 @@ function endSession() {
   border-color: #2d6b00;
 }
 
+.path-node.active {
+  animation: pulse-node 1.4s ease-in-out infinite;
+  width: 72px;
+  height: 72px;
+}
+
+@keyframes pulse-node {
+  0%, 100% { box-shadow: 0 4px 0 #2d6b00, 0 0 0 0 rgba(88, 204, 2, 0.6); }
+  50%       { box-shadow: 0 4px 0 #2d6b00, 0 0 0 10px rgba(88, 204, 2, 0); }
+}
+
+.path-node.locked {
+  background: #374151;
+  border-color: #1f2937;
+  box-shadow: 0 4px 0 #111827;
+  cursor: default;
+  color: #6b7280;
+}
+
+.path-node.locked:active {
+  transform: none;
+  box-shadow: 0 4px 0 #111827;
+}
+
+.node-lock {
+  font-size: 18px;
+  position: absolute;
+}
+
 .node-check {
   position: absolute;
   bottom: 2px;
@@ -592,6 +635,7 @@ function endSession() {
 }
 
 .note-badge { font-size: 12px; }
+.rep-badge { font-size: 10px; color: #4b5563; background: #1f2937; border-radius: 4px; padding: 1px 4px; }
 
 .btn-delete-verse {
   position: absolute;

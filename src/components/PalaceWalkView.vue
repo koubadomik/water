@@ -1,24 +1,33 @@
 <template>
   <div class="palace-walk">
-    <div class="position">{{ current + 1 }} / {{ verses.length }}</div>
-
-    <div class="card">
-      <div class="verse-ref">{{ verse.ref }}</div>
-      <div class="verse-text">{{ verse.text }}</div>
-      <div v-if="verse.note" class="note">
-        <span class="note-label">Palace note</span>
-        <span class="note-text">{{ verse.note }}</span>
+    <template v-if="verses.length === 0">
+      <div class="empty">No completed verses to review yet.</div>
+      <div class="btn-row">
+        <button data-testid="next" class="btn-next" @click="emit('done')">Continue</button>
       </div>
-    </div>
+    </template>
 
-    <div class="btn-row">
-      <button v-if="current > 0" data-testid="back" class="btn-back" @click="onBack">
-        ← Back
-      </button>
-      <button data-testid="next" class="btn-next" @click="onNext">
-        {{ isLast ? 'Done' : 'Next' }}
-      </button>
-    </div>
+    <template v-else>
+      <div class="position">{{ current + 1 }} / {{ verses.length }}</div>
+
+      <div class="card">
+        <div class="verse-ref">{{ verse.ref }}</div>
+        <div class="verse-text">{{ verse.text }}</div>
+        <div v-if="verse.note" class="note">
+          <span class="note-label">Palace note</span>
+          <span class="note-text">{{ verse.note }}</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button v-if="current > 0" data-testid="back" class="btn-back" @click="onBack">
+          ← Back
+        </button>
+        <button data-testid="next" class="btn-next" @click="onNext">
+          {{ isLast ? 'Done' : 'Next' }}
+        </button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -58,6 +67,17 @@ function onNext() {
   gap: 24px;
   padding: 24px 16px;
   flex: 1;
+}
+
+.empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 15px;
+  text-align: center;
+  padding: 40px;
 }
 
 .position {

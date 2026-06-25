@@ -86,6 +86,7 @@
             <span class="verse-preview" v-html="highlight(r.text, query)" />
           </div>
           <span v-if="hasVerse(r.ref)" class="saved-dot">●</span>
+          <span v-if="getNote(r.book, r.chapter, r.verseIdx)" class="note-pin">📌</span>
         </button>
       </div>
 
@@ -141,6 +142,7 @@
           <div class="verse-block-header">
             <span class="verse-num">{{ idx + 1 }}</span>
             <span v-if="hasVerse(`${selectedBook} ${selectedChapter}:${idx + 1}`)" class="saved-dot">●</span>
+            <span v-if="getNote(selectedBook, selectedChapter, idx)" class="note-pin">📌</span>
             <button class="detail-btn" @click="openVerse(idx, text)">Detail →</button>
           </div>
           <div class="verse-block-text">{{ text }}</div>
@@ -673,6 +675,11 @@ function onFileUpload(e) {
   color: #58cc02;
   font-size: 10px;
   margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.note-pin {
+  font-size: 12px;
   flex-shrink: 0;
 }
 </style>

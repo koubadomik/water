@@ -1,9 +1,26 @@
 <template>
   <div class="more">
-    <!-- More -->
+    <!-- History view overlay -->
+    <HistoryView
+      v-if="showHistory"
+      @back="showHistory = false"
+      @navigate="emit('navigate', $event)"
+    />
+
+    <template v-else>
+    <!-- Header -->
       <div class="menu-header">More</div>
 
       <div class="menu-list">
+        <button class="menu-item" @click="showHistory = true">
+          <span class="menu-icon">📜</span>
+          <div class="menu-text">
+            <div class="menu-title">History</div>
+            <div class="menu-desc">Past paths and completed verses</div>
+          </div>
+          <span class="chevron">›</span>
+        </button>
+
         <a class="menu-item" href="../" target="_blank">
           <span class="menu-icon">🧠</span>
           <div class="menu-text">
@@ -57,6 +74,7 @@
           <span class="util-desc">Force re-download Bible data</span>
         </button>
       </div>
+    </template>
   </div>
 </template>
 
@@ -64,9 +82,13 @@
 import { ref, computed } from 'vue'
 import { useVerseList } from '../composables/useVerseList.js'
 import { useProgress } from '../composables/useProgress.js'
+import HistoryView from './HistoryView.vue'
+
+const emit = defineEmits(['navigate'])
 
 const { verses } = useVerseList()
 const { streak, xp, state: progressState } = useProgress()
+const showHistory = ref(false)
 
 // --- Level / stats ---
 const level = computed(() => Math.floor((xp.value ?? 0) / 100) + 1)

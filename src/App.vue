@@ -7,7 +7,7 @@
         <HomeView    v-if="activeTab === 'home'"    />
         <PalaceView  v-else-if="activeTab === 'palace'"  />
         <SymbolsView v-else-if="activeTab === 'symbols'" />
-        <MoreView    v-else-if="activeTab === 'more'"    />
+        <MoreView    v-else-if="activeTab === 'more'"    @navigate="activeTab = $event" />
       </main>
     </template>
   </AppShell>

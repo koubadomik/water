@@ -117,8 +117,8 @@ function clearBibleCache() {
 .menu-header {
   padding: 20px 16px 8px;
   font-size: 22px;
-  font-weight: 800;
-  color: #f9fafb;
+  font-weight: 700;
+  color: var(--foreground);
 }
 
 .menu-list { display: flex; flex-direction: column; gap: 1px; padding: 8px 0; }
@@ -129,7 +129,7 @@ function clearBibleCache() {
   gap: 14px;
   background: none;
   border: none;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--border);
   padding: 16px;
   cursor: pointer;
   width: 100%;
@@ -141,9 +141,9 @@ function clearBibleCache() {
 
 .menu-icon { font-size: 28px; }
 .menu-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.menu-title { font-size: 16px; font-weight: 600; color: #f9fafb; }
-.menu-desc { font-size: 13px; color: #6b7280; }
-.chevron { font-size: 22px; color: #4b5563; }
+.menu-title { font-size: 16px; font-weight: 600; color: var(--foreground); }
+.menu-desc { font-size: 13px; color: var(--muted-foreground); }
+.chevron { font-size: 22px; color: var(--muted-foreground); }
 
 /* Stats */
 .stats-section {
@@ -155,7 +155,7 @@ function clearBibleCache() {
 
 .stats-title {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 4px;
@@ -166,43 +166,43 @@ function clearBibleCache() {
   align-items: center;
   gap: 10px;
   padding: 12px;
-  background: #1f2937;
-  border-radius: 12px;
+  background: var(--muted);
+  border-radius: var(--radius-md);
 }
 
 .level-label {
   font-size: 15px;
   font-weight: 700;
-  color: #58cc02;
+  color: var(--primary);
   min-width: 56px;
 }
 
 .xp-bar-track {
   flex: 1;
   height: 8px;
-  background: #374151;
-  border-radius: 4px;
+  background: var(--muted);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .xp-bar-fill {
   height: 100%;
-  background: #58cc02;
-  border-radius: 4px;
+  background: var(--primary);
+  border-radius: var(--radius-sm);
   transition: width 0.4s ease;
 }
 
-.xp-hint { font-size: 12px; color: #6b7280; white-space: nowrap; }
+.xp-hint { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
 
 .stat-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 15px;
-  color: #d1d5db;
+  color: var(--foreground);
 }
 
-.stat-row strong { color: #f9fafb; font-size: 16px; }
+.stat-row strong { color: var(--foreground); font-size: 16px; }
 
 /* Utility */
 .util-section {
@@ -216,10 +216,10 @@ function clearBibleCache() {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 12px;
-  color: #d1d5db;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
   font-size: 15px;
   padding: 14px 16px;
   text-align: left;
@@ -229,6 +229,6 @@ function clearBibleCache() {
 
 .util-desc {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--muted-foreground);
 }
 </style>

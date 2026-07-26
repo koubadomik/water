@@ -74,7 +74,7 @@ function onNext() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: var(--muted-foreground);
   font-size: 15px;
   text-align: center;
   padding: 40px;
@@ -82,14 +82,14 @@ function onNext() {
 
 .position {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--muted-foreground);
   letter-spacing: 0.05em;
 }
 
 .card {
   width: 100%;
-  background: #1f2937;
-  border-radius: 16px;
+  background: var(--muted);
+  border-radius: var(--radius-lg);
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -99,35 +99,37 @@ function onNext() {
 .verse-ref {
   font-size: 13px;
   font-weight: 600;
-  color: #58cc02;
+  color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .verse-text {
-  font-size: 20px;
-  line-height: 1.5;
-  color: #f9fafb;
+  font-family: var(--font-reading);
+  font-size: var(--text-lg);
+  line-height: var(--leading-reading);
+  color: var(--foreground);
+  text-wrap: pretty;
 }
 
 .note {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border-top: 1px solid #374151;
+  border-top: 1px solid var(--border);
   padding-top: 16px;
 }
 
 .note-label {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 
 .note-text {
   font-size: 15px;
-  color: #d1d5db;
+  color: var(--foreground);
   font-style: italic;
 }
 
@@ -140,12 +142,12 @@ function onNext() {
 
 .btn-back {
   padding: 16px;
-  background: #1f2937;
-  color: #9ca3af;
+  background: var(--muted);
+  color: var(--muted-foreground);
   font-size: 16px;
   font-weight: 700;
-  border: 2px solid #374151;
-  border-radius: 12px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -153,12 +155,12 @@ function onNext() {
 .btn-next {
   flex: 1;
   padding: 16px;
-  background: #58cc02;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   font-size: 16px;
   font-weight: 700;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
 }
 </style>

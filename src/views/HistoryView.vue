@@ -123,35 +123,35 @@ function openDrill(v) {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--border);
 }
 
 .drill-ref {
   font-size: 15px;
   font-weight: 700;
-  color: #58cc02;
+  color: var(--primary);
 }
 
 .back-btn {
   background: none;
   border: none;
-  color: #6b7280;
+  color: var(--muted-foreground);
   font-size: 14px;
   cursor: pointer;
   padding: 4px 8px;
 }
-.back-btn:hover { color: #9ca3af; }
+.back-btn:hover { color: var(--muted-foreground); }
 
 .history-title {
   font-size: 20px;
-  font-weight: 800;
-  color: #f9fafb;
+  font-weight: 700;
+  color: var(--foreground);
 }
 
 .empty-state {
   padding: 40px 24px;
   text-align: center;
-  color: #6b7280;
+  color: var(--muted-foreground);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -163,7 +163,7 @@ function openDrill(v) {
 }
 
 .history-entry {
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--border);
 }
 
 .entry-header {
@@ -173,12 +173,12 @@ function openDrill(v) {
   cursor: pointer;
   gap: 12px;
 }
-.entry-header:hover { background: #1a2332; }
+.entry-header:hover { background: var(--muted); }
 
 .entry-meta { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.entry-label { font-size: 16px; font-weight: 700; color: #f9fafb; }
-.entry-date { font-size: 12px; color: #6b7280; }
-.entry-chevron { font-size: 12px; color: #4b5563; }
+.entry-label { font-size: 16px; font-weight: 700; color: var(--foreground); }
+.entry-date { font-size: 12px; color: var(--muted-foreground); }
+.entry-chevron { font-size: 12px; color: var(--muted-foreground); }
 
 .entry-body {
   padding: 0 16px 16px;
@@ -197,12 +197,12 @@ function openDrill(v) {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 8px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 4px 6px 4px 10px;
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--muted-foreground);
 }
 
 .entry-verse-ref { flex: 1; }
@@ -210,20 +210,20 @@ function openDrill(v) {
 .btn-drill-verse {
   background: none;
   border: none;
-  color: #58cc02;
+  color: var(--primary);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   padding: 4px 6px;
   white-space: nowrap;
 }
-.btn-drill-verse:hover { color: #86efac; }
+.btn-drill-verse:hover { color: var(--success); }
 
 .btn-rerun {
-  background: #1f2937;
-  border: 2px solid #374151;
-  border-radius: 12px;
-  color: #58cc02;
+  background: var(--muted);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--primary);
   font-size: 14px;
   font-weight: 700;
   padding: 12px 16px;
@@ -231,5 +231,5 @@ function openDrill(v) {
   text-align: left;
   transition: border-color 0.15s;
 }
-.btn-rerun:hover { border-color: #58cc02; }
+.btn-rerun:hover { border-color: var(--primary); }
 </style>

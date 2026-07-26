@@ -54,17 +54,16 @@ const tabs = [
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--background);
+  color: var(--foreground);
 }
 
+/* Plain surface with a hairline, not a floating glass slab. */
 .bottom-nav {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   border-top: 1px solid var(--border);
-  background: rgba(17, 24, 39, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: var(--background);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   flex-shrink: 0;
 }
@@ -74,58 +73,50 @@ const tabs = [
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 10px 4px 12px;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 52px;
+  padding: var(--space-2) var(--space-1);
   background: none;
   border: none;
-  color: var(--text-muted);
+  color: var(--muted-foreground);
   cursor: pointer;
   transition: color var(--transition);
   -webkit-tap-highlight-color: transparent;
-  outline: none;
 }
 
 .nav-tab:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--ring);
   outline-offset: -2px;
-  border-radius: var(--radius-sm);
 }
 
 .nav-tab.active {
-  color: var(--primary);
+  color: var(--foreground);
 }
 
 .tab-pip {
   position: absolute;
   top: 0;
-  width: 20px;
-  height: 3px;
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  width: 18px;
+  height: 2px;
   background: var(--primary);
   opacity: 0;
-  transform: scaleX(0);
-  transition: opacity var(--transition), transform var(--transition);
+  transition: opacity var(--transition);
 }
 
 .tab-pip.visible {
   opacity: 1;
-  transform: scaleX(1);
 }
 
 .tab-icon {
-  width: 24px;
-  height: 24px;
-  transition: transform var(--transition);
-}
-
-.nav-tab.active .tab-icon {
-  transform: scale(1.08);
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.75;
 }
 
 .tab-label {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.02em;
-  transition: color var(--transition);
 }
 </style>

@@ -316,19 +316,19 @@ function onFileUpload(e) {
   gap: 14px;
   padding: 40px;
   text-align: center;
-  color: #9ca3af;
+  color: var(--muted-foreground);
 }
 
 .icon { font-size: 48px; }
-.hint { font-size: 13px; color: #6b7280; }
+.hint { font-size: 13px; color: var(--muted-foreground); }
 
 .upload-btn {
-  background: #58cc02;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   font-size: 15px;
   font-weight: 700;
   padding: 12px 24px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   cursor: pointer;
 }
 
@@ -336,9 +336,9 @@ function onFileUpload(e) {
 
 .retry-btn {
   background: none;
-  border: 1px solid #374151;
-  border-radius: 10px;
-  color: #9ca3af;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
   font-size: 14px;
   padding: 10px 20px;
   cursor: pointer;
@@ -347,8 +347,8 @@ function onFileUpload(e) {
 .spinner {
   width: 36px;
   height: 36px;
-  border: 3px solid #374151;
-  border-top-color: #58cc02;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -360,30 +360,30 @@ function onFileUpload(e) {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
-  background: #111827;
+  background: var(--background);
   z-index: 2;
 }
 
 .search-input {
   flex: 1;
-  background: #1f2937;
+  background: var(--muted);
   border: none;
-  border-radius: 10px;
-  color: #f9fafb;
+  border-radius: var(--radius-md);
+  color: var(--foreground);
   font-size: 15px;
   padding: 10px 14px;
   outline: none;
 }
 
-.search-input::placeholder { color: #6b7280; }
+.search-input::placeholder { color: var(--muted-foreground); }
 
 .clear-btn {
   background: none;
   border: none;
-  color: #6b7280;
+  color: var(--muted-foreground);
   font-size: 16px;
   cursor: pointer;
   padding: 4px 8px;
@@ -392,7 +392,7 @@ function onFileUpload(e) {
 .empty-results {
   padding: 24px;
   text-align: center;
-  color: #6b7280;
+  color: var(--muted-foreground);
   font-size: 14px;
 }
 
@@ -401,20 +401,20 @@ function onFileUpload(e) {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--border);
 }
 
 .detail-ref {
   flex: 1;
   font-weight: 700;
-  color: #58cc02;
+  color: var(--primary);
   font-size: 15px;
 }
 
 .back-btn {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--muted-foreground);
   font-size: 14px;
   cursor: pointer;
   padding: 4px 8px;
@@ -423,7 +423,7 @@ function onFileUpload(e) {
 .nav-btn {
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--muted-foreground);
   font-size: 22px;
   cursor: pointer;
   padding: 2px 6px;
@@ -431,30 +431,32 @@ function onFileUpload(e) {
 }
 
 .nav-btn:disabled {
-  color: #374151;
+  color: var(--muted-foreground);
   cursor: default;
 }
 
 .in-path-badge {
   font-size: 11px;
   font-weight: 600;
-  color: #58cc02;
-  background: #14532d;
-  border-radius: 20px;
+  color: var(--primary);
+  background: var(--success-surface);
+  border-radius: var(--radius-lg);
   padding: 4px 10px;
 }
 
 .verse-card {
-  background: #1f2937;
+  background: var(--muted);
   margin: 16px;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   padding: 20px;
 }
 
 .verse-text {
-  font-size: 18px;
-  line-height: 1.7;
-  color: #f9fafb;
+  font-family: var(--font-reading);
+  font-size: var(--text-lg);
+  line-height: var(--leading-reading);
+  color: var(--foreground);
+  text-wrap: pretty;
 }
 
 .note-section {
@@ -466,16 +468,16 @@ function onFileUpload(e) {
 
 .note-label {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .note-input {
-  background: #1f2937;
-  border: 2px solid #374151;
-  border-radius: 12px;
-  color: #f9fafb;
+  background: var(--muted);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
   font-size: 15px;
   padding: 12px;
   resize: none;
@@ -484,37 +486,37 @@ function onFileUpload(e) {
   box-sizing: border-box;
 }
 
-.note-input:focus { border-color: #58cc02; }
+.note-input:focus { border-color: var(--primary); }
 
 .book-search-bar {
   padding: 8px 12px;
-  border-bottom: 1px solid #1f2937;
-  background: #111827;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
 }
 
 .book-search-input {
   width: 100%;
-  background: #1f2937;
+  background: var(--muted);
   border: none;
-  border-radius: 8px;
-  color: #f9fafb;
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
   font-size: 14px;
   padding: 8px 12px;
   outline: none;
   box-sizing: border-box;
 }
 
-.book-search-input::placeholder { color: #6b7280; }
+.book-search-input::placeholder { color: var(--muted-foreground); }
 
 .chapter-bulk-header {
   justify-content: space-between;
 }
 
 .save-all-btn {
-  background: #58cc02;
+  background: var(--primary);
   border: none;
-  border-radius: 8px;
-  color: #fff;
+  border-radius: var(--radius-sm);
+  color: var(--primary-foreground);
   font-size: 12px;
   font-weight: 700;
   padding: 6px 12px;
@@ -522,7 +524,7 @@ function onFileUpload(e) {
 }
 
 .verse-block {
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--border);
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
@@ -539,22 +541,22 @@ function onFileUpload(e) {
   margin-left: auto;
   background: none;
   border: none;
-  color: #58cc02;
+  color: var(--primary);
   font-size: 12px;
   cursor: pointer;
 }
 
 .verse-block-text {
   font-size: 14px;
-  color: #d1d5db;
+  color: var(--foreground);
   line-height: 1.5;
 }
 
 .verse-block-note {
-  background: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 8px;
-  color: #f9fafb;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--foreground);
   font-size: 13px;
   padding: 8px 10px;
   resize: none;
@@ -563,12 +565,12 @@ function onFileUpload(e) {
   box-sizing: border-box;
 }
 
-.verse-block-note:focus { border-color: #58cc02; }
+.verse-block-note:focus { border-color: var(--primary); }
 
 .save-feedback {
   padding: 12px;
   text-align: center;
-  color: #58cc02;
+  color: var(--primary);
   font-weight: 700;
   font-size: 14px;
 }
@@ -582,26 +584,26 @@ function onFileUpload(e) {
   padding: 12px 16px;
   font-size: 15px;
   font-weight: 700;
-  color: #f9fafb;
-  border-bottom: 1px solid #1f2937;
+  color: var(--foreground);
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 53px;
-  background: #111827;
+  background: var(--background);
   z-index: 1;
 }
 
 .list-item {
   background: none;
   border: none;
-  border-bottom: 1px solid #1f2937;
-  color: #f9fafb;
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
   text-align: left;
   padding: 14px 16px;
   font-size: 15px;
   cursor: pointer;
 }
 
-.list-item:active { background: #1f2937; }
+.list-item:active { background: var(--muted); }
 
 .chapter-grid {
   display: grid;
@@ -611,17 +613,17 @@ function onFileUpload(e) {
 }
 
 .chapter-btn {
-  background: #1f2937;
+  background: var(--muted);
   border: none;
-  border-radius: 10px;
-  color: #f9fafb;
+  border-radius: var(--radius-md);
+  color: var(--foreground);
   font-size: 16px;
   font-weight: 600;
   padding: 14px 0;
   cursor: pointer;
 }
 
-.chapter-btn:active { background: #374151; }
+.chapter-btn:active { background: var(--muted); }
 
 .verse-item {
   display: flex;
@@ -629,7 +631,7 @@ function onFileUpload(e) {
   gap: 12px;
   background: none;
   border: none;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--border);
   padding: 12px 16px;
   text-align: left;
   cursor: pointer;
@@ -638,7 +640,7 @@ function onFileUpload(e) {
 
 .verse-num {
   font-size: 12px;
-  color: #58cc02;
+  color: var(--primary);
   font-weight: 700;
   min-width: 20px;
   margin-top: 2px;
@@ -655,24 +657,24 @@ function onFileUpload(e) {
 .result-ref {
   font-size: 12px;
   font-weight: 700;
-  color: #58cc02;
+  color: var(--primary);
 }
 
 .verse-preview {
   font-size: 14px;
-  color: #d1d5db;
+  color: var(--foreground);
   line-height: 1.5;
 }
 
 .verse-preview :deep(mark) {
-  background: #854d0e;
-  color: #fef08a;
+  background: var(--warning-surface);
+  color: var(--warning);
   border-radius: 2px;
   padding: 0 1px;
 }
 
 .saved-dot {
-  color: #58cc02;
+  color: var(--primary);
   font-size: 10px;
   margin-top: 4px;
   flex-shrink: 0;

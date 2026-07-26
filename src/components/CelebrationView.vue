@@ -87,8 +87,8 @@ onMounted(() => {
 
 .title {
   font-size: 28px;
-  font-weight: 800;
-  color: #f9fafb;
+  font-weight: 700;
+  color: var(--foreground);
   margin: 0;
 }
 
@@ -105,19 +105,19 @@ onMounted(() => {
 }
 
 .stat-icon  { font-size: 28px; }
-.stat-value { font-size: 36px; font-weight: 800; color: #f9fafb; }
-.stat-label { font-size: 13px; color: #6b7280; }
+.stat-value { font-size: 36px; font-weight: 700; color: var(--foreground); }
+.stat-label { font-size: 13px; color: var(--muted-foreground); }
 
 .btn {
   width: 100%;
   max-width: 320px;
   padding: 16px;
-  background: #58cc02;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   font-size: 18px;
   font-weight: 700;
   border: none;
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
 }
 </style>

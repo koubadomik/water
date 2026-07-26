@@ -136,19 +136,19 @@ function assess(gotIt) {
 .test-title {
   font-size: 13px;
   font-weight: 700;
-  color: #58cc02;
+  color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 
 .test-progress {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--muted-foreground);
 }
 
 .card {
-  background: #1f2937;
-  border-radius: 16px;
+  background: var(--muted);
+  border-radius: var(--radius-lg);
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -157,56 +157,56 @@ function assess(gotIt) {
 
 .ref-large {
   font-size: 24px;
-  font-weight: 800;
-  color: #58cc02;
+  font-weight: 700;
+  color: var(--primary);
   text-align: center;
 }
 
 .textarea {
-  background: #111827;
-  border: 2px solid #374151;
-  border-radius: 12px;
-  color: #f9fafb;
+  background: var(--background);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--foreground);
   font-size: 16px;
   padding: 12px;
   resize: none;
   outline: none;
   width: 100%;
 }
-.textarea:focus { border-color: #58cc02; }
+.textarea:focus { border-color: var(--primary); }
 
 .diff-output {
   font-size: 15px;
   line-height: 1.8;
-  color: #d1d5db;
+  color: var(--foreground);
 }
-.diff-output :deep(.d-correct)  { color: #58cc02; }
-.diff-output :deep(.d-wrong)    { color: #ff4b4b; text-decoration: line-through; }
-.diff-output :deep(.d-missing)  { color: #f59e0b; }
-.diff-output :deep(.d-extra)    { color: #9ca3af; font-style: italic; }
-.diff-output :deep(.d-expected) { color: #6b7280; font-size: 12px; margin-left: 1px; }
+.diff-output :deep(.d-correct)  { color: var(--primary); }
+.diff-output :deep(.d-wrong)    { color: var(--destructive); text-decoration: line-through; }
+.diff-output :deep(.d-missing)  { color: var(--warning); }
+.diff-output :deep(.d-extra)    { color: var(--muted-foreground); font-style: italic; }
+.diff-output :deep(.d-expected) { color: var(--muted-foreground); font-size: 12px; margin-left: 1px; }
 
 .self-assess { display: flex; flex-direction: column; gap: 10px; }
-.assess-prompt { font-size: 14px; color: #9ca3af; }
+.assess-prompt { font-size: 14px; color: var(--muted-foreground); }
 .assess-row { display: flex; gap: 10px; }
 
 .btn {
   flex: 1;
   padding: 14px;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  background: #58cc02;
-  color: #fff;
+  background: var(--primary);
+  color: var(--primary-foreground);
   width: 100%;
 }
 
-.btn-primary { background: #58cc02; color: #fff; box-shadow: 0 4px 0 #3d8f00; }
-.btn-secondary { background: #1f2937; border: 2px solid #374151; color: #9ca3af; box-shadow: none; }
-.assess-yes { background: #58cc02; color: #fff; }
-.assess-no  { background: #374151; color: #d1d5db; }
+.btn-primary { background: var(--primary); color: var(--primary-foreground); box-shadow: var(--shadow-sm); }
+.btn-secondary { background: var(--muted); border: 2px solid var(--border); color: var(--muted-foreground); box-shadow: none; }
+.assess-yes { background: var(--primary); color: var(--primary-foreground); }
+.assess-no  { background: var(--muted); color: var(--foreground); }
 
 /* Summary */
 .summary {
@@ -219,8 +219,8 @@ function assess(gotIt) {
 }
 
 .summary-icon { font-size: 64px; }
-.summary-title { font-size: 28px; font-weight: 800; color: #f9fafb; }
-.summary-stats { font-size: 18px; color: #9ca3af; }
+.summary-title { font-size: 28px; font-weight: 700; color: var(--foreground); }
+.summary-stats { font-size: 18px; color: var(--muted-foreground); }
 .summary-actions {
   display: flex;
   flex-direction: column;

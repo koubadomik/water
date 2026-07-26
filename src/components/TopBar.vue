@@ -3,15 +3,14 @@
     <div class="stats-row">
       <div data-testid="streak" class="stat-pill">
         <svg class="stat-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" fill="#f97316" stroke="#ea580c" stroke-width="1"/>
-          <path d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" fill="#fed7aa" stroke="none"/>
+          <path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
         <span class="stat-value">{{ streak }}</span>
       </div>
 
       <div data-testid="xp" class="stat-pill xp-pill">
         <svg class="stat-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="#fbbf24" stroke="#d97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         <span class="stat-value">{{ xp }}</span>
       </div>
@@ -61,91 +60,79 @@ const weekDays = computed(() => {
 
 <style scoped>
 .top-bar {
-  padding: 10px 16px 8px;
-  background: rgba(17, 24, 39, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  background: var(--background);
   border-bottom: 1px solid var(--border);
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
   flex-shrink: 0;
 }
 
 .stats-row {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  gap: var(--space-4);
+  order: 2;
 }
 
+/* Counters read as quiet metadata, not as trophies. */
 .stat-pill {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  padding: 4px 12px 4px 8px;
-}
-
-.xp-pill {
-  background: rgba(251, 191, 36, 0.08);
-  border-color: rgba(251, 191, 36, 0.2);
+  gap: var(--space-1);
+  color: var(--muted-foreground);
 }
 
 .stat-svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
+  fill: none;
 }
 
 .stat-value {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
-  letter-spacing: -0.01em;
 }
 
 .week-row {
   display: flex;
-  justify-content: center;
-  gap: 6px;
+  gap: var(--space-2);
+  order: 1;
 }
 
 .day-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .day-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--bg-elevated);
-  border: 2px solid #374151;
-  transition: background var(--transition-md), border-color var(--transition-md), box-shadow var(--transition-md);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: 1.5px solid var(--border);
+  transition: background var(--transition), border-color var(--transition);
 }
 
 .day-dot.done {
   background: var(--primary);
-  border-color: var(--primary-dark);
-}
-
-.day-dot.today {
   border-color: var(--primary);
 }
 
-.day-dot.today.done {
-  box-shadow: 0 0 0 3px rgba(88, 204, 2, 0.2);
+.day-dot.today {
+  border-color: var(--muted-foreground);
 }
 
 .day-label {
   font-size: 9px;
-  font-weight: 800;
-  color: var(--text-muted);
+  font-weight: 600;
+  color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }

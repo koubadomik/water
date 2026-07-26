@@ -17,15 +17,31 @@
         <template v-for="(seg, i) in v.segments" :key="i">
           <span v-if="seg.type === 'text'">{{ seg.value }}</span>
 
-          <span v-else-if="state[seg.marker]?.done" :class="['cz-filled', state[seg.marker].missed && 'missed']">
-            <span class="cz-marker">{{ seg.marker }}</span>{{ seg.value }}
-          </span>
+          <button
+            v-else-if="state[seg.marker]?.done"
+            :class="['cz-filled', state[seg.marker].outcome]"
+            data-testid="cloze-filled"
+            :title="`Hide ${seg.marker} again`"
+            @click="hide(seg.marker)"
+          >
+            <span class="cz-marker">{{ seg.marker }}</span>
+
+            <template v-if="state[seg.marker].diff?.attempted">
+              <template v-for="(w, wi) in state[seg.marker].diff.words" :key="wi"
+                ><span :class="['cz-w', w.status]">{{ w.value }}</span>{{ ' ' }}</template
+              >
+              <s v-if="state[seg.marker].diff.extra.length" class="cz-extra" data-testid="cloze-extra">{{
+                state[seg.marker].diff.extra.join(' ')
+              }}</s>
+            </template>
+            <template v-else>{{ seg.value }}</template>
+          </button>
 
           <button
             v-else-if="mode === 'reveal'"
             class="cz-blank"
             data-testid="cloze-blank"
-            @click="give(seg.marker, true)"
+            @click="reveal(seg.marker, seg.value)"
           >
             <span class="cz-marker">{{ seg.marker }}</span><span class="cz-rule" />
           </button>
@@ -43,10 +59,11 @@
               spellcheck="false"
               enterkeyhint="done"
               :style="{ width: inputWidth(seg.marker) }"
+              @input="onInput(seg.marker)"
               @keydown.enter.prevent="check(seg.marker, seg.value)"
               @blur="check(seg.marker, seg.value)"
             />
-            <button class="cz-give" title="Show me" @click="give(seg.marker, true)">?</button>
+            <button class="cz-give" title="Show me" @click="reveal(seg.marker, seg.value)">?</button>
           </span>
         </template>
       </p>
@@ -63,6 +80,7 @@
 <script setup>
 import { ref, computed, reactive } from 'vue'
 import { answersMatch } from '../../lib/matchAnswer.js'
+import { diffWords } from '../../lib/diffWords.js'
 
 const props = defineProps({
   passage: { type: Object, required: true },
@@ -85,32 +103,44 @@ function inputWidth(marker) {
   return Math.max(10, (typed[marker]?.length ?? 0) + 2) + 'ch'
 }
 
-// missed = the answer was handed over rather than recalled
-function give(marker, missed) {
-  state[marker] = { done: true, missed }
+function solve(marker) {
+  state[marker] = { done: true, outcome: 'correct', diff: null }
   delete wrong[marker]
 }
 
-function check(marker, expected) {
-  // Blur fires this too, so an untouched field must stay neutral rather
-  // than flashing an error just because you tapped elsewhere.
-  if (state[marker]?.done || !typed[marker]?.trim()) return
-  if (answersMatch(typed[marker], expected)) {
-    give(marker, false)
-  } else {
-    wrong[marker] = true
-    setTimeout(() => delete wrong[marker], 500)
-  }
+// Handing over the answer is only useful alongside what you had — the diff
+// says which words you were missing rather than just what the phrase was.
+function reveal(marker, expected) {
+  state[marker] = { done: true, outcome: 'revealed', diff: diffWords(typed[marker], expected) }
+  delete wrong[marker]
+}
+
+function hide(marker) {
+  delete state[marker]
+}
+
+function check(marker, expected, { force = false } = {}) {
+  if (state[marker]?.done) return
+  const attempt = typed[marker]?.trim()
+  // Blur fires this too, so an untouched field stays neutral rather than
+  // flashing an error just because you tapped elsewhere. Check all forces
+  // the verdict, and an empty answer is a wrong one.
+  if (!attempt && !force) return
+  if (attempt && answersMatch(attempt, expected)) solve(marker)
+  else wrong[marker] = true
 }
 
 function checkAll() {
-  for (const b of blanks.value) {
-    if (!state[b.marker]?.done && typed[b.marker]) check(b.marker, b.value)
-  }
+  for (const b of blanks.value) check(b.marker, b.value, { force: true })
+}
+
+// Editing clears the verdict so the next check reads as a fresh attempt.
+function onInput(marker) {
+  delete wrong[marker]
 }
 
 function revealAll() {
-  for (const b of blanks.value) if (!state[b.marker]?.done) give(b.marker, true)
+  for (const b of blanks.value) if (!state[b.marker]?.done) reveal(b.marker, b.value)
 }
 
 function reset() {
@@ -119,7 +149,11 @@ function reset() {
   for (const k of Object.keys(wrong)) delete wrong[k]
 }
 
+// Tap and Type are separate exercises, not two views of one. Switching
+// starts the passage over rather than carrying answers across.
 function setMode(next) {
+  if (next === mode.value) return
+  reset()
   mode.value = next
 }
 </script>
@@ -224,16 +258,36 @@ function setMode(next) {
 }
 
 /* Recalled and given-up read differently, so a glance over the
-   passage shows what you actually knew. */
+   passage shows what you actually knew. Tapping one hides it again. */
 .cz-filled {
-  background: var(--success-surface);
+  border: none;
   border-radius: var(--radius-sm);
   padding: 1px var(--space-2);
   margin: 0 2px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: var(--success-surface);
 }
 
-.cz-filled.missed {
+.cz-filled.revealed {
   background: var(--warning-surface);
+}
+
+/* Words you had, versus the ones you were missing. */
+.cz-w.missing {
+  font-weight: 600;
+  color: var(--warning);
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.cz-extra {
+  color: var(--muted-foreground);
+  font-size: 0.9em;
 }
 
 .cz-input-wrap {

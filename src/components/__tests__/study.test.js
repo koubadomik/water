@@ -125,6 +125,104 @@ describe('ClozeTrainer', () => {
     expect(w.text()).toContain('0 / 3')
   })
 
+  test('check all reaches every field, including the empty ones', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    await w.findAll('[data-testid="cloze-input"]')[1].setValue('posledních ran')
+    await w.findAll('button').find((b) => b.text() === 'Check all').trigger('click')
+
+    expect(w.text()).toContain('1 / 3')
+    // The two left blank are now marked wrong rather than silently skipped.
+    expect(w.findAll('.cz-input-wrap.wrong')).toHaveLength(2)
+  })
+
+  test('a wrong verdict persists until the field is edited', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    const input = w.findAll('[data-testid="cloze-input"]')[1]
+    await input.setValue('nope')
+    await input.trigger('keydown.enter')
+    expect(w.findAll('.cz-input-wrap.wrong')).toHaveLength(1)
+
+    await input.setValue('posledních')
+    expect(w.findAll('.cz-input-wrap.wrong')).toHaveLength(0)
+  })
+
+  test('switching modes resets progress so the two are independent', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('[data-testid="cloze-blank"]')[0].trigger('click')
+    expect(w.text()).toContain('1 / 3')
+
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    expect(w.text()).toContain('0 / 3')
+    expect(w.findAll('[data-testid="cloze-input"]')).toHaveLength(3)
+
+    await w.findAll('button').find((b) => b.text() === 'Tap').trigger('click')
+    expect(w.text()).toContain('0 / 3')
+    expect(w.findAll('[data-testid="cloze-blank"]')).toHaveLength(3)
+  })
+
+  test('switching modes clears anything already typed', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    await w.findAll('[data-testid="cloze-input"]')[0].setValue('veliké')
+    await w.findAll('button').find((b) => b.text() === 'Tap').trigger('click')
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    expect(w.findAll('[data-testid="cloze-input"]')[0].element.value).toBe('')
+  })
+
+  test('tapping a revealed blank hides it again', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('[data-testid="cloze-blank"]')[0].trigger('click')
+    expect(w.text()).toContain('1 / 3')
+
+    await w.find('[data-testid="cloze-filled"]').trigger('click')
+    expect(w.text()).toContain('0 / 3')
+    expect(w.text()).not.toContain('jiné veliké a podivuhodné znamení')
+    expect(w.findAll('[data-testid="cloze-blank"]')).toHaveLength(3)
+  })
+
+  test('giving up shows the answer marked with the words you missed', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    await w.findAll('[data-testid="cloze-input"]')[0].setValue('veliké znamení')
+    await w.findAll('button').find((b) => b.attributes('title') === 'Show me').trigger('click')
+
+    const filled = w.find('[data-testid="cloze-filled"]')
+    const missing = filled.findAll('.cz-w.missing').map((n) => n.text())
+    const ok = filled.findAll('.cz-w.ok').map((n) => n.text())
+    expect(ok).toEqual(['veliké', 'znamení'])
+    expect(missing).toEqual(['jiné', 'a', 'podivuhodné'])
+  })
+
+  test('giving up reports words you typed that do not belong', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    await w.findAll('[data-testid="cloze-input"]')[1].setValue('posledních dnů')
+    await w.findAll('button').filter((b) => b.attributes('title') === 'Show me')[1].trigger('click')
+    expect(w.find('[data-testid="cloze-extra"]').text()).toBe('dnů')
+  })
+
+  test('an untouched blank reveals plainly, with no mistake marks', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('[data-testid="cloze-blank"]')[0].trigger('click')
+    const filled = w.find('[data-testid="cloze-filled"]')
+    expect(filled.text()).toContain('jiné veliké a podivuhodné znamení')
+    expect(filled.findAll('.cz-w.missing')).toHaveLength(0)
+  })
+
+  test('reveal all diffs every field against what was typed', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    await w.findAll('[data-testid="cloze-input"]')[0].setValue('veliké znamení')
+    await w.findAll('button').find((b) => b.text() === 'Reveal all').trigger('click')
+
+    expect(w.text()).toContain('3 / 3')
+    const first = w.findAll('[data-testid="cloze-filled"]')[0]
+    expect(first.findAll('.cz-w.ok').map((n) => n.text())).toEqual(['veliké', 'znamení'])
+    expect(first.findAll('.cz-w.missing').length).toBe(3)
+  })
+
   test('reveal all fills every blank', async () => {
     const w = mount(ClozeTrainer, { props: { passage: set.passage } })
     await w.findAll('button').find((b) => b.text() === 'Reveal all').trigger('click')

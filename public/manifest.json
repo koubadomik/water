@@ -4,8 +4,8 @@
   "description": "Bible verse memorization with memory palace techniques",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#58cc02",
+  "background_color": "#fefdfb",
+  "theme_color": "#fefdfb",
   "orientation": "portrait",
   "icons": [
     {

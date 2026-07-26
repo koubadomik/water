@@ -1,0 +1,287 @@
+/* ─────────────────────────────────────────────────────────────
+   VerseMaster theme
+   Token vocabulary follows shadcn/ui: semantic names, OKLCH,
+   neutral surfaces with a single restrained accent. Light and
+   dark are designed as a pair, not inverted from each other.
+   ───────────────────────────────────────────────────────────── */
+
+@import url('https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Surfaces and text */
+  --background: oklch(0.995 0.003 85);
+  --foreground: oklch(0.185 0.012 65);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.185 0.012 65);
+  --muted: oklch(0.968 0.006 85);
+  --muted-foreground: oklch(0.52 0.014 70);
+
+  /* One accent, used sparingly — warm ink, not a game colour */
+  --primary: oklch(0.47 0.095 55);
+  --primary-foreground: oklch(0.99 0.004 85);
+  --accent: oklch(0.955 0.022 75);
+  --accent-foreground: oklch(0.36 0.08 55);
+
+  /* Feedback */
+  --success: oklch(0.55 0.11 150);
+  --success-surface: oklch(0.955 0.035 150);
+  --warning: oklch(0.63 0.12 75);
+  --warning-surface: oklch(0.96 0.045 80);
+  --destructive: oklch(0.577 0.245 27.325);
+
+  /* Lines and focus */
+  --border: oklch(0.905 0.008 80);
+  --input: oklch(0.885 0.009 80);
+  --ring: oklch(0.47 0.095 55 / 45%);
+
+  /* Type */
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-reading: 'Literata', Georgia, 'Times New Roman', serif;
+
+  --text-xs:   0.75rem;   /* 12 — labels, verse numbers */
+  --text-sm:   0.875rem;  /* 14 — secondary UI */
+  --text-base: 1rem;      /* 16 — UI body, never smaller on mobile */
+  --text-lg:   1.125rem;  /* 18 — scripture on mobile */
+  --text-xl:   1.25rem;   /* 20 — screen titles */
+  --text-2xl:  1.5rem;    /* 24 */
+  --text-3xl:  1.875rem;  /* 30 */
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-reading: 1.75;
+
+  /* 4px rhythm */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --radius: 0.625rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-full: 9999px;
+
+  /* Separation comes from borders first, shadow second */
+  --shadow-sm: 0 1px 2px oklch(0.2 0.02 65 / 6%);
+  --shadow-md: 0 2px 8px oklch(0.2 0.02 65 / 8%);
+  --shadow-lg: 0 8px 28px oklch(0.2 0.02 65 / 12%);
+
+  --transition: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-md: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Reading measure — 60ch keeps lines in the comfortable band */
+  --measure: 34rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --background: oklch(0.165 0.008 70);
+    --foreground: oklch(0.945 0.006 85);
+    --card: oklch(0.208 0.009 70);
+    --card-foreground: oklch(0.945 0.006 85);
+    --muted: oklch(0.262 0.009 70);
+    --muted-foreground: oklch(0.705 0.011 78);
+
+    --primary: oklch(0.76 0.085 62);
+    --primary-foreground: oklch(0.19 0.02 60);
+    --accent: oklch(0.30 0.026 62);
+    --accent-foreground: oklch(0.88 0.05 70);
+
+    --success: oklch(0.72 0.11 152);
+    --success-surface: oklch(0.30 0.045 152);
+    --warning: oklch(0.78 0.10 78);
+    --warning-surface: oklch(0.31 0.04 78);
+    --destructive: oklch(0.704 0.191 22.216);
+
+    --border: oklch(1 0 0 / 11%);
+    --input: oklch(1 0 0 / 16%);
+    --ring: oklch(0.76 0.085 62 / 45%);
+
+    --shadow-sm: 0 1px 2px oklch(0 0 0 / 30%);
+    --shadow-md: 0 2px 10px oklch(0 0 0 / 38%);
+    --shadow-lg: 0 8px 30px oklch(0 0 0 / 46%);
+  }
+}
+
+:root[data-theme='dark'] {
+  --background: oklch(0.165 0.008 70);
+  --foreground: oklch(0.945 0.006 85);
+  --card: oklch(0.208 0.009 70);
+  --card-foreground: oklch(0.945 0.006 85);
+  --muted: oklch(0.262 0.009 70);
+  --muted-foreground: oklch(0.705 0.011 78);
+  --primary: oklch(0.76 0.085 62);
+  --primary-foreground: oklch(0.19 0.02 60);
+  --accent: oklch(0.30 0.026 62);
+  --accent-foreground: oklch(0.88 0.05 70);
+  --success: oklch(0.72 0.11 152);
+  --success-surface: oklch(0.30 0.045 152);
+  --warning: oklch(0.78 0.10 78);
+  --warning-surface: oklch(0.31 0.04 78);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 11%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.76 0.085 62 / 45%);
+}
+
+/* ── Legacy aliases ───────────────────────────────────────────
+   The pre-existing components still ask for these names. They
+   now resolve to the new palette, so nothing looks stale while
+   components are restyled one at a time. Delete an alias once
+   its last consumer is gone.
+   ─────────────────────────────────────────────────────────── */
+:root {
+  --bg: var(--background);
+  --bg-raised: var(--card);
+  --bg-elevated: var(--muted);
+  --surface: var(--muted);
+  --border-solid: var(--input);
+  --text: var(--foreground);
+  --text-dim: var(--muted-foreground);
+  --text-muted: var(--muted-foreground);
+  --primary-dark: var(--primary);
+  --primary-shadow: transparent;
+  --primary-glow: var(--success-surface);
+  --danger: var(--destructive);
+  --font: var(--font-ui);
+}
+
+/* ── Base ─────────────────────────────────────────────────── */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:where(button, input, textarea, select) { font-family: inherit; }
+
+:where(button, a, input, textarea, [role='button']):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── The reading surface ──────────────────────────────────────
+   Scripture is set in a serif at a longer measure and a looser
+   leading than the interface around it. The shift in typeface is
+   the signal that you've moved from the app into the text.
+   ─────────────────────────────────────────────────────────── */
+
+.prose {
+  font-family: var(--font-reading);
+  font-size: var(--text-lg);
+  line-height: var(--leading-reading);
+  color: var(--foreground);
+  max-width: var(--measure);
+  margin-inline: auto;
+  text-wrap: pretty;
+  hanging-punctuation: first;
+}
+
+.prose-verse {
+  margin-bottom: var(--space-4);
+}
+
+/* Verse number sits in the margin, out of the reading path */
+.prose-num {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  vertical-align: 0.4em;
+  margin-right: var(--space-2);
+  user-select: none;
+}
+
+.prose-ref {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+@media (min-width: 640px) {
+  .prose { font-size: var(--text-xl); }
+}
+
+/* ── Shared controls ─────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 44px; /* touch target floor */
+  padding: var(--space-3) var(--space-5);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), opacity var(--transition);
+}
+
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.btn-ghost:hover:not(:disabled) { background: var(--muted); }
+
+.card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-3);
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-ui);
+  font-size: var(--text-base); /* 16px — stops iOS zoom-on-focus */
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+}
+
+.input:focus { outline: 2px solid var(--ring); outline-offset: 1px; border-color: var(--primary); }

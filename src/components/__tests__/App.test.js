@@ -8,6 +8,20 @@ describe('App', () => {
     expect(wrapper.findAll('[data-testid="nav-tab"]').length).toBe(4)
   })
 
+  test('falls back to home when a saved tab no longer exists', () => {
+    localStorage.setItem('lastTab', 'symbols')
+    const wrapper = mount(App)
+    expect(wrapper.find('[data-tab-id="home"]').classes()).toContain('active')
+    localStorage.removeItem('lastTab')
+  })
+
+  test('opens the study section when the hash asks for it', async () => {
+    location.hash = '#/new'
+    const wrapper = mount(App)
+    expect(wrapper.find('[data-testid="paste-box"]').exists()).toBe(true)
+    location.hash = ''
+  })
+
   test('renders TopBar', () => {
     const wrapper = mount(App)
     expect(wrapper.find('[data-testid="streak"]').exists()).toBe(true)

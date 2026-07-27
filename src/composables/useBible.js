@@ -34,7 +34,14 @@ async function _load() {
     const res = await fetch(BIBLE_URL)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
-    localStorage.setItem(LS_KEY, JSON.stringify(data))
+    // A full Bible is several megabytes. Mobile Safari/private browsing can
+    // reject localStorage writes even though the network request succeeded.
+    // Caching is an optimisation, never a reason to discard usable data.
+    try {
+      localStorage.setItem(LS_KEY, JSON.stringify(data))
+    } catch {
+      // Keep the Bible in memory for this session and fetch it again later.
+    }
     bible.value = data
   } catch (e) {
     error.value = e.message

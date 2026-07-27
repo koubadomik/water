@@ -1,21 +1,25 @@
 <template>
   <AppShell v-model="activeTab">
     <template #default>
-      <TopBar :streak="streak" :xp="xp" :weekly-progress="weeklyProgress" />
+      <TopBar />
 
       <main class="main">
-        <TodayView   v-if="activeTab === 'home'"    @navigate="activeTab = $event" />
-        <PalaceView  v-else-if="activeTab === 'palace'"  />
-        <SearchView  v-else-if="activeTab === 'search'"  />
-        <TestsView   v-else-if="activeTab === 'new'"     />
-        <MoreView    v-else-if="activeTab === 'more'"    @navigate="activeTab = $event" />
+        <Transition name="page" mode="out-in">
+          <div :key="activeTab" class="page-frame">
+            <TodayView   v-if="activeTab === 'home'"    @navigate="activeTab = $event" />
+            <PalaceView  v-else-if="activeTab === 'palace'"  />
+            <SearchView  v-else-if="activeTab === 'search'"  />
+            <TestsView   v-else-if="activeTab === 'new'"     />
+            <MoreView    v-else-if="activeTab === 'more'"    @navigate="activeTab = $event" />
+          </div>
+        </Transition>
       </main>
     </template>
   </AppShell>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import AppShell   from './components/AppShell.vue'
 import TopBar     from './components/TopBar.vue'
 import TodayView  from './views/TodayView.vue'
@@ -23,7 +27,6 @@ import PalaceView from './views/PalaceView.vue'
 import SearchView from './views/SearchView.vue'
 import TestsView  from './views/TestsView.vue'
 import MoreView   from './views/MoreView.vue'
-import { useProgress } from './composables/useProgress.js'
 
 const TABS = ['home', 'palace', 'search', 'new', 'more']
 
@@ -51,8 +54,6 @@ window.addEventListener('hashchange', () => {
   const next = tabFromHash()
   if (next && next !== activeTab.value) activeTab.value = next
 })
-const { streak, xp, state: progressState } = useProgress()
-const weeklyProgress = computed(() => progressState.value.weeklyProgress ?? {})
 </script>
 
 <!-- Global tokens, base styles and shared controls live in src/styles/theme.css -->
@@ -65,4 +66,9 @@ const weeklyProgress = computed(() => progressState.value.weeklyProgress ?? {})
   flex-direction: column;
   min-height: 0;
 }
+.page-frame { display: flex; min-height: 100%; flex: 1; flex-direction: column; }
+.page-enter-active, .page-leave-active { transition: opacity 180ms ease, transform 180ms ease; }
+.page-enter-from { opacity: 0; transform: translateY(8px); }
+.page-leave-to { opacity: 0; transform: translateY(-5px); }
+@media (min-width: 760px) { .page-frame { width: min(100%, 760px); margin: 0 auto; border-inline: 1px solid var(--border); box-shadow: 0 0 56px color-mix(in srgb, var(--foreground) 5%, transparent); } }
 </style>

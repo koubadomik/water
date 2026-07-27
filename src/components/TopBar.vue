@@ -1,67 +1,16 @@
 <template>
   <header class="top-bar">
-    <div class="stats-row">
-      <div data-testid="streak" class="stat-pill">
-        <svg class="stat-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
-        <span class="stat-value">{{ streak }}</span>
-      </div>
-
-      <div data-testid="xp" class="stat-pill xp-pill">
-        <svg class="stat-svg" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="stat-value">{{ xp }}</span>
-      </div>
-    </div>
-
-    <div class="week-row" aria-label="This week's progress">
-      <div
-        v-for="day in weekDays"
-        :key="day.str"
-        class="day-col"
-        :title="day.str"
-      >
-        <div class="day-dot" :class="{ done: day.done, today: day.isToday }" />
-        <span class="day-label">{{ day.label }}</span>
-      </div>
-    </div>
+    <div class="brand" aria-label="VerseMaster"><span class="brand-mark">V</span><span>VerseMaster</span></div>
   </header>
 </template>
 
-<script setup>
-import { computed } from 'vue'
-
-const props = defineProps({
-  streak:         { type: Number, default: 0 },
-  xp:             { type: Number, default: 0 },
-  weeklyProgress: { type: Object, default: () => ({}) },
-})
-
-const weekDays = computed(() => {
-  const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
-  const dow = today.getDay()
-  const monday = new Date(today)
-  monday.setDate(today.getDate() - ((dow + 6) % 7))
-
-  const days = []
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    const str = d.toISOString().split('T')[0]
-    const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-    days.push({ str, done: !!props.weeklyProgress[str], isToday: str === todayStr, label: labels[i] })
-  }
-  return days
-})
-</script>
+<script setup></script>
 
 <style scoped>
 .top-bar {
   padding: var(--space-3) var(--space-4) var(--space-2);
-  background: var(--background);
+  background: color-mix(in srgb, var(--background) 86%, transparent);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -69,11 +18,13 @@ const weekDays = computed(() => {
   gap: var(--space-4);
   flex-shrink: 0;
 }
+.brand { display: flex; align-items: center; gap: 7px; font-family: var(--font-reading); font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
+.brand-mark { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 8px 8px 8px 2px; background: var(--primary); color: var(--primary-foreground); font-family: Georgia, serif; font-size: 13px; font-weight: 700; box-shadow: 0 4px 11px color-mix(in srgb, var(--primary) 25%, transparent); }
 
 .stats-row {
   display: flex;
   gap: var(--space-4);
-  order: 2;
+  order: 3;
 }
 
 /* Counters read as quiet metadata, not as trophies. */
@@ -101,7 +52,8 @@ const weekDays = computed(() => {
 .week-row {
   display: flex;
   gap: var(--space-2);
-  order: 1;
+  order: 2;
+  margin-left: auto;
 }
 
 .day-col {

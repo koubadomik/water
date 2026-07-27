@@ -59,7 +59,7 @@ const tabs = [
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  background: var(--background);
+  background: radial-gradient(circle at 10% -10%, color-mix(in srgb, var(--accent) 80%, transparent), transparent 32%), var(--background);
   color: var(--foreground);
 }
 
@@ -67,9 +67,13 @@ const tabs = [
 .bottom-nav {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  border-top: 1px solid var(--border);
-  background: var(--background);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--foreground) 15%);
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  backdrop-filter: blur(18px) saturate(1.15);
+  margin: 0 var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--radius-xl);
+  padding-bottom: 0;
+  box-shadow: var(--shadow-lg);
   flex-shrink: 0;
 }
 
@@ -80,13 +84,13 @@ const tabs = [
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  min-height: 52px;
+  min-height: 58px;
   padding: var(--space-2) var(--space-1);
   background: none;
   border: none;
   color: var(--muted-foreground);
   cursor: pointer;
-  transition: color var(--transition);
+  transition: color var(--transition), transform var(--transition), background var(--transition);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -98,12 +102,15 @@ const tabs = [
 .nav-tab.active {
   color: var(--foreground);
 }
+.nav-tab.active .tab-icon { stroke-width: 2.35; transform: translateY(-1px); }
+.nav-tab:active { transform: scale(.94); }
 
 .tab-pip {
   position: absolute;
-  top: 0;
-  width: 18px;
-  height: 2px;
+  top: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
   background: var(--primary);
   opacity: 0;
   transition: opacity var(--transition);
@@ -117,6 +124,7 @@ const tabs = [
   width: 22px;
   height: 22px;
   stroke-width: 1.75;
+  transition: transform var(--transition), stroke-width var(--transition);
 }
 
 .tab-label {

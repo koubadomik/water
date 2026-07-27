@@ -73,7 +73,10 @@
     <!-- ── The day's list ───────────────────────────────── -->
     <template v-else>
       <header class="td-head">
-        <h2 class="td-title">Today</h2>
+        <div>
+          <p class="td-kicker">Your rhythm</p>
+          <h2 class="td-title">Today</h2>
+        </div>
         <span class="td-count" data-testid="today-count">{{ done }} / {{ orderedItems.length }}</span>
       </header>
 
@@ -99,7 +102,7 @@
 
       <template v-else>
         <ul class="td-list">
-          <li v-for="item in orderedItems" :key="item.id" class="td-row">
+          <li v-for="(item, index) in orderedItems" :key="item.id" class="td-row" :style="{ '--item-index': index }">
             <button
                 class="td-item"
                 data-testid="today-item"
@@ -207,6 +210,8 @@ function leaveActive() {
   padding: var(--space-5) var(--space-4) var(--space-10);
 }
 
+.td-kicker { margin-bottom: 1px; color: var(--primary); font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+
 .td-set {
   font-size: var(--text-sm);
   color: var(--muted-foreground);
@@ -232,19 +237,23 @@ function leaveActive() {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-4);
 }
 
 .td-title {
   font-size: var(--text-2xl);
   font-weight: 700;
+  letter-spacing: -.045em;
 }
 
 .td-count {
   font-size: var(--text-sm);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
+  color: var(--primary);
+  background: var(--accent);
+  border-radius: var(--radius-full);
+  padding: 5px 9px;
 }
 
 .td-list {
@@ -258,6 +267,8 @@ function leaveActive() {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  animation: item-in 360ms both;
+  animation-delay: calc(var(--item-index) * 45ms);
 }
 
 .td-item {
@@ -267,7 +278,7 @@ function leaveActive() {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: var(--card);
+  background: linear-gradient(135deg, var(--card), color-mix(in srgb, var(--card) 88%, var(--accent)));
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   color: var(--foreground);
@@ -275,10 +286,11 @@ function leaveActive() {
   text-align: left;
   padding: var(--space-3) var(--space-4);
   cursor: pointer;
-  transition: border-color var(--transition);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
 }
 
-.td-item:hover:not(:disabled) { border-color: var(--muted-foreground); }
+.td-item:hover:not(:disabled) { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
 .td-item.done {
   color: var(--muted-foreground);
@@ -288,6 +300,12 @@ function leaveActive() {
 .td-item.done .td-item-label { text-decoration: line-through; }
 
 .td-mark {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+  border-radius: var(--radius-full);
   color: var(--primary);
   flex-shrink: 0;
 }
@@ -317,6 +335,8 @@ function leaveActive() {
 }
 
 .td-detail-button:hover { background: var(--muted); color: var(--foreground); }
+
+@keyframes item-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
 .td-detail { padding: var(--space-2) var(--space-1); }
 .td-detail-text { margin: var(--space-4) 0 var(--space-8); }

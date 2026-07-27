@@ -22,9 +22,9 @@ describe('App', () => {
     location.hash = ''
   })
 
-  test('renders TopBar', () => {
+  test('renders the minimal app header', () => {
     const wrapper = mount(App)
-    expect(wrapper.find('[data-testid="streak"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('VerseMaster')
   })
 
   test('shows PalaceWalkView in home tab by default when verses exist', () => {

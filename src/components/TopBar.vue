@@ -1,10 +1,15 @@
 <template>
   <header class="top-bar">
-    <div class="brand" aria-label="VerseMaster"><span class="brand-mark">V</span><span>VerseMaster</span></div>
+    <div class="brand" aria-label="Bible memorisation"><PaperBird v-if="birdEnabled" compact /></div>
   </header>
 </template>
 
-<script setup></script>
+<script setup>
+import PaperBird from './PaperBird.vue'
+import { usePaperBird } from '../composables/usePaperBird.js'
+
+const { enabled: birdEnabled } = usePaperBird()
+</script>
 
 <style scoped>
 .top-bar {
@@ -18,8 +23,7 @@
   gap: var(--space-4);
   flex-shrink: 0;
 }
-.brand { display: flex; align-items: center; gap: 7px; font-family: var(--font-reading); font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
-.brand-mark { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 8px 8px 8px 2px; background: var(--primary); color: var(--primary-foreground); font-family: Georgia, serif; font-size: 13px; font-weight: 700; box-shadow: 0 4px 11px color-mix(in srgb, var(--primary) 25%, transparent); }
+.brand { display: flex; align-items: center; height: 38px; }
 
 .stats-row {
   display: flex;

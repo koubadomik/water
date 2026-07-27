@@ -40,6 +40,10 @@
         {{ isZen ? '◐ Exit zen mode' : '◌ Zen mode' }}
         <span class="util-desc">{{ isZen ? 'Return to the full app view.' : 'Hide the app header while keeping navigation available.' }}</span>
       </button>
+      <button class="util-btn zen-toggle" @click="setPaperBird(!birdEnabled)">
+        {{ birdEnabled ? '🕊 Hide paper bird' : '🕊 Show paper bird' }}
+        <span class="util-desc">A small Home companion with occasional Scripture.</span>
+      </button>
     </section>
 
     <section class="util-section appearance-section" aria-labelledby="appearance-heading">
@@ -86,11 +90,13 @@
 import { useAppearance } from '../composables/useAppearance.js'
 import { clearCachedBible } from '../lib/bibleCache.js'
 import { useZen } from '../composables/useZen.js'
+import { usePaperBird } from '../composables/usePaperBird.js'
 import { ref } from 'vue'
 
 const { skins, fonts, selectedSkin, selectedFont, applyAppearance, applyFont } = useAppearance()
 const appearanceOpen = ref(false)
 const { isZen, setZen } = useZen()
+const { enabled: birdEnabled, setPaperBird } = usePaperBird()
 
 async function clearBibleCache() {
   if (confirm('Clear the cached Bible data? It will be re-downloaded next time you open the Palace.')) {

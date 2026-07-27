@@ -80,14 +80,16 @@
 
 <script setup>
 import { useAppearance } from '../composables/useAppearance.js'
+import { clearCachedBible } from '../lib/bibleCache.js'
 import { ref } from 'vue'
 
 const { skins, fonts, selectedSkin, selectedFont, applyAppearance, applyFont } = useAppearance()
 const appearanceOpen = ref(false)
 
-function clearBibleCache() {
+async function clearBibleCache() {
   if (confirm('Clear the cached Bible data? It will be re-downloaded next time you open the Palace.')) {
     localStorage.removeItem('bibleJSON')
+    try { await clearCachedBible() } catch { /* Browser storage may be unavailable. */ }
     alert('Cache cleared. Reload the app to fetch fresh data.')
   }
 }

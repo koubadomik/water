@@ -1,11 +1,12 @@
 import { shallowRef, ref } from 'vue'
+import { cacheBible, readCachedBible } from '../lib/bibleCache.js'
 
 const BIBLE_URL = 'https://raw.githubusercontent.com/koubadomik/water/main/resources/bible.json'
-const LS_KEY = 'bibleJSON'
 
 const bible = shallowRef(null)
 const loading = ref(false)
 const error = ref(null)
+const source = ref(null)
 
 let initiated = false
 
@@ -14,7 +15,7 @@ export function useBible() {
     initiated = true
     _load()
   }
-  return { bible, loading, error, reload: _load }
+  return { bible, loading, error, source, reload: _load }
 }
 
 async function _load() {
@@ -22,9 +23,10 @@ async function _load() {
   error.value = null
 
   try {
-    const cached = localStorage.getItem(LS_KEY)
+    const cached = await readCachedBible()
     if (cached) {
-      bible.value = JSON.parse(cached)
+      bible.value = cached
+      source.value = 'offline'
       loading.value = false
       return
     }
@@ -34,17 +36,15 @@ async function _load() {
     const res = await fetch(BIBLE_URL)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
-    // A full Bible is several megabytes. Mobile Safari/private browsing can
-    // reject localStorage writes even though the network request succeeded.
-    // Caching is an optimisation, never a reason to discard usable data.
-    try {
-      localStorage.setItem(LS_KEY, JSON.stringify(data))
-    } catch {
-      // Keep the Bible in memory for this session and fetch it again later.
-    }
     bible.value = data
+    source.value = 'network'
+    // IndexedDB handles multi-megabyte content much more reliably on iOS.
+    // A cache failure is never allowed to turn a successful download into an error.
+    cacheBible(data).catch(() => {})
   } catch (e) {
-    error.value = e.message
+    error.value = navigator.onLine === false
+      ? 'You are offline and no Bible has been saved on this device yet.'
+      : e.message
   } finally {
     loading.value = false
   }

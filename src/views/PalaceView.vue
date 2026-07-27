@@ -62,6 +62,7 @@
 
     <!-- Bible browser -->
     <template v-else>
+      <p v-if="source === 'offline'" class="offline-notice">Offline — using the Bible saved on this device.</p>
       <div class="palace-jump-wrap">
         <form class="palace-jump" @submit.prevent="jumpToReference">
           <input
@@ -171,7 +172,7 @@ import { resolveReference } from '../lib/reference.js'
 import { searchBible } from '../lib/bibleSearch.js'
 import PalaceChapterWalk from '../components/PalaceChapterWalk.vue'
 
-const { bible, loading, error, reload } = useBible()
+const { bible, loading, error, source, reload } = useBible()
 const { getNote, setNote } = usePalaceNotes()
 
 const selectedBook = ref(null)
@@ -333,6 +334,7 @@ function onFileUpload(e) {
 }
 
 .palace-jump-wrap { position: relative; z-index: 2; }
+.offline-notice { margin: var(--space-3) var(--space-4) 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); background: var(--accent); color: var(--accent-foreground); font-size: var(--text-sm); }
 
 .palace-jump {
   display: flex;

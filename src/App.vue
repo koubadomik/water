@@ -27,6 +27,7 @@ import PalaceView from './views/PalaceView.vue'
 import SearchView from './views/SearchView.vue'
 import TestsView  from './views/TestsView.vue'
 import MoreView   from './views/MoreView.vue'
+import { useQueue } from './composables/useQueue.js'
 
 const TABS = ['home', 'palace', 'search', 'new', 'more']
 
@@ -54,6 +55,13 @@ window.addEventListener('hashchange', () => {
   const next = tabFromHash()
   if (next && next !== activeTab.value) activeTab.value = next
 })
+
+const { orderedItems, isDoneToday } = useQueue()
+watch(orderedItems, (items) => {
+  const remaining = items.filter(item => !isDoneToday(item.id)).length
+  if (remaining) navigator.setAppBadge?.(1)
+  else navigator.clearAppBadge?.()
+}, { immediate: true, deep: true })
 </script>
 
 <!-- Global tokens, base styles and shared controls live in src/styles/theme.css -->

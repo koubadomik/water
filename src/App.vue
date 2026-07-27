@@ -2,6 +2,7 @@
   <AppShell v-model="activeTab">
     <template #default>
       <TopBar />
+      <button v-if="isZen" class="exit-zen" @click="setZen(false)">× Exit zen mode</button>
 
       <main class="main">
         <Transition name="page" mode="out-in">
@@ -28,6 +29,7 @@ import SearchView from './views/SearchView.vue'
 import TestsView  from './views/TestsView.vue'
 import MoreView   from './views/MoreView.vue'
 import { useQueue } from './composables/useQueue.js'
+import { useZen } from './composables/useZen.js'
 
 const TABS = ['home', 'palace', 'search', 'new', 'more']
 
@@ -57,6 +59,7 @@ window.addEventListener('hashchange', () => {
 })
 
 const { orderedItems, isDoneToday } = useQueue()
+const { isZen, setZen } = useZen()
 watch(orderedItems, (items) => {
   const remaining = items.filter(item => !isDoneToday(item.id)).length
   if (remaining) navigator.setAppBadge?.(1)
@@ -74,6 +77,7 @@ watch(orderedItems, (items) => {
   flex-direction: column;
   min-height: 0;
 }
+.exit-zen { position: fixed; z-index: 9999; top: max(12px, env(safe-area-inset-top)); right: 12px; min-height: 44px; padding: 10px 14px; border: 2px solid var(--primary-foreground); border-radius: var(--radius-full); background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: var(--shadow-lg); }
 .page-frame { display: flex; min-height: 100%; flex: 1; flex-direction: column; }
 .page-enter-active, .page-leave-active { transition: opacity 180ms ease, transform 180ms ease; }
 .page-enter-from { opacity: 0; transform: translateY(8px); }

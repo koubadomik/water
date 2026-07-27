@@ -280,6 +280,9 @@ button:active:not(:disabled) { transform: translateY(1px); }
   }
 }
 
+:root[data-zen='true'] .top-bar { display: none; }
+:root[data-zen='true'] .app-shell { padding: 0; }
+
 /* ── The reading surface ──────────────────────────────────────
    Scripture is set in a serif at a longer measure and a looser
    leading than the interface around it. The shift in typeface is

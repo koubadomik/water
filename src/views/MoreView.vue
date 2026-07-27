@@ -36,6 +36,10 @@
         🗑 Clear Bible cache
         <span class="util-desc">Force a fresh Bible-data download next time you open Palace.</span>
       </button>
+      <button class="util-btn zen-toggle" @click="setZen(!isZen)">
+        {{ isZen ? '◐ Exit zen mode' : '◌ Zen mode' }}
+        <span class="util-desc">{{ isZen ? 'Return to the full app view.' : 'Hide the app header while keeping navigation available.' }}</span>
+      </button>
     </section>
 
     <section class="util-section appearance-section" aria-labelledby="appearance-heading">
@@ -81,10 +85,12 @@
 <script setup>
 import { useAppearance } from '../composables/useAppearance.js'
 import { clearCachedBible } from '../lib/bibleCache.js'
+import { useZen } from '../composables/useZen.js'
 import { ref } from 'vue'
 
 const { skins, fonts, selectedSkin, selectedFont, applyAppearance, applyFont } = useAppearance()
 const appearanceOpen = ref(false)
+const { isZen, setZen } = useZen()
 
 async function clearBibleCache() {
   if (confirm('Clear the cached Bible data? It will be re-downloaded next time you open the Palace.')) {
@@ -181,6 +187,7 @@ async function clearBibleCache() {
   font-size: 12px;
   color: var(--muted-foreground);
 }
+.zen-toggle { margin-top: 8px; }
 
 .skin-list { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); }
 .appearance-toggle { display:flex; width:100%; align-items:center; justify-content:space-between; margin-bottom:8px; border:0; background:none; color:var(--foreground); font:inherit; text-align:left; cursor:pointer; }.appearance-toggle b { display:block; font-size:13px; letter-spacing:.08em; text-transform:uppercase; }.appearance-toggle small { color:var(--muted-foreground); font-size:12px; text-transform:capitalize; }

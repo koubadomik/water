@@ -6,7 +6,7 @@
         <h2 class="sv-title">{{ chapter.book }} {{ chapter.number }}</h2>
       </header>
       <article class="sv-chapter prose">
-        <p v-for="(text, index) in chapter.verses" :key="index" :class="['prose-verse', { hit: index === chapter.highlight } ]">
+        <p v-for="(text, index) in chapter.verses" :key="index" :ref="index === chapter.highlight ? setHighlightedVerse : null" :class="['prose-verse', { hit: index === chapter.highlight } ]">
           <span class="prose-num">{{ index + 1 }}</span>{{ text }}
         </p>
       </article>
@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useBible, getChapter } from '../composables/useBible.js'
 import { highlightSearchMatch, searchBible } from '../lib/bibleSearch.js'
 
@@ -60,6 +60,7 @@ const { bible } = useBible()
 const query = ref('')
 const chapter = ref(null)
 const copiedRef = ref(null)
+const highlightedVerse = ref(null)
 const results = computed(() => searchBible(bible.value, query.value))
 
 function openChapter(result) {
@@ -69,6 +70,11 @@ function openChapter(result) {
     verses: getChapter(bible.value, result.book, result.chapter),
     highlight: result.verseIdx,
   }
+  nextTick(() => highlightedVerse.value?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
+}
+
+function setHighlightedVerse(element) {
+  highlightedVerse.value = element
 }
 
 async function copyVerse(result) {

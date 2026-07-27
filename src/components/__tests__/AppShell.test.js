@@ -6,7 +6,7 @@ describe('AppShell', () => {
   test('renders a tab for every section', () => {
     const wrapper = mount(AppShell)
     const ids = wrapper.findAll('[data-testid="nav-tab"]').map((t) => t.attributes('data-tab-id'))
-    expect(ids).toEqual(['home', 'palace', 'new', 'more'])
+    expect(ids).toEqual(['home', 'palace', 'search', 'new', 'more'])
   })
 
   test('home tab is active by default', () => {

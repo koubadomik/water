@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import { useStorage } from './useStorage.js'
+import { uid } from '../lib/uid.js'
 import { parseStudySet } from '../lib/parseStudySet.js'
 
 const LS_KEY = 'studySets_v1'
@@ -22,7 +23,7 @@ export function useStudySets() {
     const result = parseStudySet(raw)
     if (!result.cards.length && !result.passage) return null
     const set = {
-      id: String(Date.now()),
+      id: uid('test-'),
       title: result.title,
       raw,
       createdAt: new Date().toISOString(),

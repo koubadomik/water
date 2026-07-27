@@ -37,8 +37,13 @@ const tabs = [
     path: 'M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z',
   },
   {
+    id: 'search',
+    label: 'Search',
+    path: 'M10.5 3.75a6.75 6.75 0 104.243 12.0l4.504 4.504 1.5-1.5-4.504-4.504A6.75 6.75 0 0010.5 3.75z',
+  },
+  {
     id: 'new',
-    label: 'Study',
+    label: 'Tests',
     path: 'M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25',
   },
   {
@@ -61,7 +66,7 @@ const tabs = [
 /* Plain surface with a hairline, not a floating glass slab. */
 .bottom-nav {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border-top: 1px solid var(--border);
   background: var(--background);
   padding-bottom: env(safe-area-inset-bottom, 0px);

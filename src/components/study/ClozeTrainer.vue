@@ -49,6 +49,7 @@
           <span v-else :class="['cz-input-wrap', { wrong: wrong[seg.marker] }]">
             <span class="cz-marker">{{ seg.marker }}</span>
             <input
+              :ref="(el) => setInputRef(seg.marker, el)"
               v-model="typed[seg.marker]"
               class="cz-input"
               data-testid="cloze-input"
@@ -57,10 +58,10 @@
               autocapitalize="off"
               autocorrect="off"
               spellcheck="false"
-              enterkeyhint="done"
-              :style="{ width: inputWidth(seg.marker) }"
+              :enterkeyhint="isLastBlank(seg.marker) ? 'done' : 'next'"
               @input="onInput(seg.marker)"
-              @keydown.enter.prevent="check(seg.marker, seg.value)"
+              @focus="scrollIntoView($event.target)"
+              @keydown.enter.prevent="submit(seg.marker, seg.value)"
               @blur="check(seg.marker, seg.value)"
             />
             <button class="cz-give" title="Show me" @click="reveal(seg.marker, seg.value)">?</button>
@@ -78,13 +79,17 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch, nextTick } from 'vue'
 import { answersMatch } from '../../lib/matchAnswer.js'
 import { diffWords } from '../../lib/diffWords.js'
 
 const props = defineProps({
   passage: { type: Object, required: true },
 })
+
+// The queue grades a cloze from its own result, so the tally is published
+// rather than the user being asked to rate what the app already measured.
+const emit = defineEmits(['progress'])
 
 const mode = ref('reveal')
 const state = reactive({})
@@ -98,9 +103,51 @@ const total = computed(() => blanks.value.length)
 const solved = computed(() => Object.values(state).filter((s) => s.done).length)
 const pct = computed(() => (total.value ? Math.round((solved.value / total.value) * 100) : 0))
 
-function inputWidth(marker) {
-  // Sized by what you've typed, never by the answer — the length is a hint.
-  return Math.max(10, (typed[marker]?.length ?? 0) + 2) + 'ch'
+const stats = computed(() => {
+  const entries = blanks.value.map((b) => state[b.marker])
+  return {
+    total: total.value,
+    correct: entries.filter((e) => e?.outcome === 'correct').length,
+    revealed: entries.filter((e) => e?.outcome === 'revealed').length,
+    finished: entries.every((e) => e?.done),
+  }
+})
+
+watch(stats, (val) => emit('progress', val), { immediate: true })
+
+// Inputs keep a fixed width. Growing them with the typed text re-wrapped the
+// whole paragraph on every keystroke, and sizing them to the answer would
+// give away its length.
+
+const inputEls = {}
+
+function setInputRef(marker, el) {
+  if (el) inputEls[marker] = el
+  else delete inputEls[marker]
+}
+
+function isLastBlank(marker) {
+  const remaining = blanks.value.filter((b) => !state[b.marker]?.done)
+  return remaining[remaining.length - 1]?.marker === marker
+}
+
+function scrollIntoView(el) {
+  // Without this the field you just focused can sit behind the keyboard.
+  el?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+}
+
+// Enter checks and moves on, so the keyboard never has to be dismissed to
+// reach the next blank.
+async function submit(marker, expected) {
+  check(marker, expected)
+  await nextTick()
+  const order = blanks.value.map((b) => b.marker)
+  const rest = order.slice(order.indexOf(marker) + 1).concat(order.slice(0, order.indexOf(marker)))
+  const next = rest.find((m) => inputEls[m])
+  if (next) {
+    inputEls[next].focus()
+    scrollIntoView(inputEls[next])
+  }
 }
 
 function solve(marker) {
@@ -210,7 +257,8 @@ function setMode(next) {
   font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
-  padding: 5px 14px;
+  min-height: 44px;
+  padding: 0 var(--space-4);
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: background var(--transition), color var(--transition);
@@ -235,6 +283,7 @@ function setMode(next) {
 }
 
 .cz-blank {
+  position: relative;
   display: inline-flex;
   align-items: baseline;
   background: var(--muted);
@@ -251,6 +300,16 @@ function setMode(next) {
   border-color: var(--primary);
 }
 
+.cz-blank::after,
+.cz-filled::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
 .cz-rule {
   display: inline-block;
   width: 5em;
@@ -260,6 +319,7 @@ function setMode(next) {
 /* Recalled and given-up read differently, so a glance over the
    passage shows what you actually knew. Tapping one hides it again. */
 .cz-filled {
+  position: relative;
   border: none;
   border-radius: var(--radius-sm);
   padding: 1px var(--space-2);
@@ -314,22 +374,40 @@ function setMode(next) {
 }
 
 .cz-input {
+  width: 9em;
+  max-width: 55vw;
   background: none;
   border: none;
   outline: none;
-  color: var(--text);
-  font: inherit;
+  color: var(--foreground);
+  font-family: var(--font-reading);
+  font-size: var(--text-base); /* 16px — stops iOS zoom-on-focus */
   padding: 0;
 }
 
 .cz-give {
+  position: relative;
   background: none;
   border: none;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  font-weight: 700;
+  line-height: 1;
   cursor: pointer;
-  padding: 0 2px;
+  padding: 0 var(--space-1);
+}
+
+/* The glyph stays small so it sits in the line, but the tap area is a
+   full-size target. Absolutely placed, so growing it shifts nothing. */
+.cz-give::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 
 .cz-give:hover {

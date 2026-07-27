@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 import QuestionTrainer from '../study/QuestionTrainer.vue'
 import ClozeTrainer from '../study/ClozeTrainer.vue'
@@ -125,6 +126,51 @@ describe('ClozeTrainer', () => {
     expect(w.text()).toContain('0 / 3')
   })
 
+  test('Enter moves to the next blank so the keyboard stays up', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage }, attachTo: document.body })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    const inputs = w.findAll('[data-testid="cloze-input"]')
+
+    inputs[0].element.focus()
+    await inputs[0].setValue('jiné veliké a podivuhodné znamení')
+    await inputs[0].trigger('keydown.enter')
+    await nextTick()
+
+    // First is solved and gone, so focus lands on what is now the first input.
+    expect(document.activeElement).toBe(w.findAll('[data-testid="cloze-input"]')[0].element)
+    expect(w.text()).toContain('1 / 3')
+    w.unmount()
+  })
+
+  test('Enter on a wrong answer still advances rather than trapping you', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage }, attachTo: document.body })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    const inputs = w.findAll('[data-testid="cloze-input"]')
+
+    inputs[0].element.focus()
+    await inputs[0].setValue('wrong')
+    await inputs[0].trigger('keydown.enter')
+    await nextTick()
+
+    expect(document.activeElement).toBe(inputs[1].element)
+    w.unmount()
+  })
+
+  test('inputs keep a fixed width so the paragraph does not reflow while typing', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    const input = w.findAll('[data-testid="cloze-input"]')[0]
+    await input.setValue('a much longer answer than before')
+    expect(input.attributes('style')).toBeUndefined()
+  })
+
+  test('the last remaining blank hints done, the others next', async () => {
+    const w = mount(ClozeTrainer, { props: { passage: set.passage } })
+    await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
+    const hints = w.findAll('[data-testid="cloze-input"]').map((i) => i.attributes('enterkeyhint'))
+    expect(hints).toEqual(['next', 'next', 'done'])
+  })
+
   test('check all reaches every field, including the empty ones', async () => {
     const w = mount(ClozeTrainer, { props: { passage: set.passage } })
     await w.findAll('button').find((b) => b.text() === 'Type').trigger('click')
@@ -236,52 +282,5 @@ describe('ClozeTrainer', () => {
     await w.findAll('button').find((b) => b.text() === 'Reset').trigger('click')
     expect(w.text()).toContain('0 / 3')
     expect(w.text()).not.toContain('posledních ran')
-  })
-})
-
-describe('StudyView', () => {
-  async function freshView() {
-    vi.resetModules()
-    const mod = await import('../../views/StudyView.vue')
-    return mount(mod.default)
-  }
-
-  test('starts on the paste screen when nothing is saved', async () => {
-    const w = await freshView()
-    expect(w.find('[data-testid="paste-box"]').exists()).toBe(true)
-  })
-
-  test('previews what the parser found before saving', async () => {
-    const w = await freshView()
-    await w.find('[data-testid="paste-box"]').setValue(SAMPLE)
-    const preview = w.find('[data-testid="paste-preview"]').text()
-    expect(preview).toContain('1 question')
-    expect(preview).toContain('3 blanks')
-  })
-
-  test('saving a set opens it for training', async () => {
-    const w = await freshView()
-    await w.find('[data-testid="paste-box"]').setValue(SAMPLE)
-    await w.findAll('button').find((b) => b.text() === 'Save set').trigger('click')
-    expect(w.find('[data-testid="question-text"]').exists()).toBe(true)
-    expect(JSON.parse(localStorage.getItem('studySets_v1'))).toHaveLength(1)
-  })
-
-  test('a saved set survives a reload and lists its contents', async () => {
-    const first = await freshView()
-    await first.find('[data-testid="paste-box"]').setValue(SAMPLE)
-    await first.findAll('button').find((b) => b.text() === 'Save set').trigger('click')
-
-    const second = await freshView()
-    expect(second.find('[data-testid="open-set"]').text()).toContain('Zj 15:1-8')
-    expect(second.find('[data-testid="open-set"]').text()).toContain('3 blanks')
-  })
-
-  test('switching to the passage tab shows the cloze', async () => {
-    const w = await freshView()
-    await w.find('[data-testid="paste-box"]').setValue(SAMPLE)
-    await w.findAll('button').find((b) => b.text() === 'Save set').trigger('click')
-    await w.findAll('button').find((b) => b.text() === 'Passage').trigger('click')
-    expect(w.findAll('[data-testid="cloze-blank"]')).toHaveLength(3)
   })
 })

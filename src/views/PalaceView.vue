@@ -18,6 +18,13 @@
       <button class="retry-btn" @click="reload">Retry fetch</button>
     </div>
 
+    <PalaceChapterWalk
+      v-else-if="walkActive"
+      :verses="walkVerses"
+      :chapter-label="`${selectedBook} ${selectedChapter}`"
+      @close="walkActive = false"
+    />
+
     <!-- Verse detail -->
     <template v-else-if="selectedVerse">
       <div class="detail-header">
@@ -35,7 +42,6 @@
           :disabled="selectedVerse.verseIdx >= chapterVerses.length - 1"
           @click="nextVerse"
         >›</button>
-        <span v-if="hasVerse(selectedVerse.ref)" class="in-path-badge">In path</span>
       </div>
 
       <div class="verse-card">
@@ -56,42 +62,30 @@
 
     <!-- Bible browser -->
     <template v-else>
-      <!-- Search bar always visible -->
-      <div class="search-bar">
-        <input
-          v-model="query"
-          class="search-input"
-          placeholder="Search verses or reference (e.g. John 3)…"
-          type="search"
-          @focus="showSearch = true"
-        />
-        <button v-if="query" class="clear-btn" @click="query = ''; showSearch = false">✕</button>
-      </div>
-
-      <!-- Search results -->
-      <div v-if="query.trim().length >= 2" class="list">
-        <div class="list-header">
-          {{ searchResults.length }} result{{ searchResults.length !== 1 ? 's' : '' }}
-        </div>
-        <div v-if="searchResults.length === 0" class="empty-results">No matches found</div>
-        <button
-          v-for="r in searchResults"
-          :key="r.ref"
-          class="verse-item"
-          @click="openVerseFromSearch(r)"
-        >
-          <span class="verse-num">{{ r.verseNum }}</span>
-          <div class="verse-content">
-            <span class="result-ref">{{ r.ref }}</span>
-            <span class="verse-preview" v-html="highlight(r.text, query)" />
-          </div>
-          <span v-if="hasVerse(r.ref)" class="saved-dot">●</span>
-          <span v-if="getNote(r.book, r.chapter, r.verseIdx)" class="note-pin">📌</span>
-        </button>
+      <div class="palace-jump-wrap">
+        <form class="palace-jump" @submit.prevent="jumpToReference">
+          <input
+            v-model="jumpInput"
+            class="search-input"
+            data-testid="palace-jump"
+            type="search"
+            placeholder="Go to chapter or verse, e.g. Zj 1:3"
+          />
+          <button class="jump-button" :disabled="!jumpResult.ok">Go</button>
+        </form>
+        <ul v-if="jumpInput.trim().length >= 2 && jumpSuggestions.length" class="jump-results">
+          <li v-for="result in jumpSuggestions" :key="result.ref">
+            <button @click="jumpToVerse(result)">
+              <span class="prose-ref">{{ result.ref }}</span>
+              <span>{{ result.text }}</span>
+            </button>
+          </li>
+        </ul>
+        <p v-if="jumpInput.trim() && !jumpResult.ok" class="jump-error">{{ jumpResult.error }}</p>
       </div>
 
       <!-- Book picker -->
-      <div v-else-if="!selectedBook" class="list">
+      <div v-if="!selectedBook" class="list">
         <div class="list-header">Books</div>
         <div class="book-search-bar">
           <input
@@ -117,9 +111,12 @@
           <button class="back-btn" @click="selectedBook = null">← Books</button>
           {{ selectedBook }}
         </div>
+        <div class="book-search-bar">
+          <input v-model="chapterQuery" class="book-search-input" type="search" inputmode="numeric" placeholder="Find chapter…" />
+        </div>
         <div class="chapter-grid">
           <button
-            v-for="n in chapterCount"
+            v-for="n in filteredChapters"
             :key="n"
             class="chapter-btn"
             @click="selectChapter(n)"
@@ -132,26 +129,32 @@
         <div class="list-header chapter-bulk-header">
           <button class="back-btn" @click="selectedChapter = null">← {{ selectedBook }}</button>
           <span>Chapter {{ selectedChapter }}</span>
-          <button class="save-all-btn" @click="saveAllNotes">Save All</button>
+          <div class="chapter-actions">
+            <button class="walk-btn" @click="startWalk">Walk</button>
+            <button class="save-all-btn" @click="saveAllNotes">Save All</button>
+          </div>
         </div>
+        <div class="book-search-bar">
+          <input v-model="verseQuery" class="book-search-input" type="search" placeholder="Find verse number or words…" />
+        </div>
+        <p v-if="!filteredChapterVerses.length" class="empty-results">No verses match this chapter search.</p>
         <div
-          v-for="(text, idx) in chapterVerses"
-          :key="idx"
+          v-for="entry in filteredChapterVerses"
+          :key="entry.idx"
           class="verse-block"
         >
           <div class="verse-block-header">
-            <span class="verse-num">{{ idx + 1 }}</span>
-            <span v-if="hasVerse(`${selectedBook} ${selectedChapter}:${idx + 1}`)" class="saved-dot">●</span>
-            <span v-if="getNote(selectedBook, selectedChapter, idx)" class="note-pin">📌</span>
-            <button class="detail-btn" @click="openVerse(idx, text)">Detail →</button>
+            <span class="verse-num">{{ entry.idx + 1 }}</span>
+            <span v-if="getNote(selectedBook, selectedChapter, entry.idx)" class="note-pin">📌</span>
+            <button class="detail-btn" @click="openVerse(entry.idx, entry.text)">Detail →</button>
           </div>
-          <div class="verse-block-text">{{ text }}</div>
+          <div class="verse-block-text">{{ entry.text }}</div>
           <textarea
-            v-model="chapterNotes[idx]"
+            v-model="chapterNotes[entry.idx]"
             class="verse-block-note"
             rows="2"
             placeholder="Memory note…"
-            @blur="autoSaveNote(idx)"
+            @blur="autoSaveNote(entry.idx)"
           />
         </div>
         <div v-if="savedFeedback" class="save-feedback">✓ Saved</div>
@@ -163,11 +166,12 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useBible, bookNames, getChapter } from '../composables/useBible.js'
-import { useVerseList } from '../composables/useVerseList.js'
 import { usePalaceNotes } from '../composables/usePalaceNotes.js'
+import { resolveReference } from '../lib/reference.js'
+import { searchBible } from '../lib/bibleSearch.js'
+import PalaceChapterWalk from '../components/PalaceChapterWalk.vue'
 
 const { bible, loading, error, reload } = useBible()
-const { hasVerse } = useVerseList()
 const { getNote, setNote } = usePalaceNotes()
 
 const selectedBook = ref(null)
@@ -175,11 +179,13 @@ const selectedChapter = ref(null)
 const selectedVerse = ref(null)
 const detailSource = ref(null) // 'list' | 'search'
 const noteInput = ref('')
-const query = ref('')
-const showSearch = ref(false)
 const bookSearch = ref('')
+const chapterQuery = ref('')
+const verseQuery = ref('')
+const jumpInput = ref('')
 const chapterNotes = ref({})
 const savedFeedback = ref(false)
+const walkActive = ref(false)
 
 const books = computed(() => bookNames(bible.value))
 const filteredBooks = computed(() => {
@@ -198,35 +204,31 @@ const chapterVerses = computed(() => {
   return getChapter(bible.value, selectedBook.value, selectedChapter.value)
 })
 
-// Search across entire Bible, capped at 60 results
-const searchResults = computed(() => {
-  const q = query.value.trim().toLowerCase()
-  if (!bible.value || q.length < 2) return []
-  const results = []
-  for (const book of Object.keys(bible.value)) {
-    const chapters = bible.value[book].chapters
-    for (let ci = 0; ci < chapters.length; ci++) {
-      const verses = chapters[ci]
-      for (let vi = 0; vi < verses.length; vi++) {
-        const text = verses[vi]
-        const ref = `${book} ${ci + 1}:${vi + 1}`
-        if (text.toLowerCase().includes(q) || ref.toLowerCase().includes(q)) {
-          results.push({ ref, text, book, chapter: ci + 1, verseIdx: vi, verseNum: vi + 1 })
-          if (results.length >= 60) return results
-        }
-      }
-    }
-  }
-  return results
+const filteredChapters = computed(() => {
+  const wanted = chapterQuery.value.trim()
+  return Array.from({ length: chapterCount.value }, (_, index) => index + 1)
+    .filter((chapter) => !wanted || String(chapter).includes(wanted))
 })
 
-function highlight(text, q) {
-  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>')
-}
+const filteredChapterVerses = computed(() => {
+  const wanted = verseQuery.value.trim().toLocaleLowerCase()
+  return chapterVerses.value
+    .map((text, idx) => ({ text, idx }))
+    .filter(({ text, idx }) => !wanted || String(idx + 1).includes(wanted) || text.toLocaleLowerCase().includes(wanted))
+})
+
+const walkVerses = computed(() => chapterVerses.value.map((text, verseIdx) => ({
+  ref: `${selectedBook.value} ${selectedChapter.value}:${verseIdx + 1}`,
+  text,
+  note: getNote(selectedBook.value, selectedChapter.value, verseIdx),
+})))
+
+const jumpResult = computed(() => resolveReference(bible.value, jumpInput.value))
+const jumpSuggestions = computed(() => searchBible(bible.value, jumpInput.value, 8).slice(0, 8))
 
 function selectChapter(n) {
   selectedChapter.value = n
+  verseQuery.value = ''
   // load notes for this chapter
   const notes = {}
   const verses = getChapter(bible.value, selectedBook.value, n)
@@ -234,6 +236,29 @@ function selectChapter(n) {
     notes[i] = getNote(selectedBook.value, n, i)
   }
   chapterNotes.value = notes
+}
+
+function jumpToReference() {
+  if (!jumpResult.value.ok) return
+  const result = jumpResult.value
+  selectedBook.value = result.book
+  selectChapter(result.chapter)
+  if (result.from !== 1 || result.to !== chapterVerses.value.length) {
+    const verse = result.verses[0]
+    selectedVerse.value = verse
+    detailSource.value = 'list'
+    noteInput.value = getNote(verse.book, verse.chapter, verse.verseIdx)
+  }
+  jumpInput.value = ''
+}
+
+function jumpToVerse(verse) {
+  selectedBook.value = verse.book
+  selectChapter(verse.chapter)
+  selectedVerse.value = verse
+  detailSource.value = 'list'
+  noteInput.value = getNote(verse.book, verse.chapter, verse.verseIdx)
+  jumpInput.value = ''
 }
 
 function autoSaveNote(idx) {
@@ -251,17 +276,17 @@ function saveAllNotes() {
   setTimeout(() => { savedFeedback.value = false }, 1500)
 }
 
+function startWalk() {
+  if (!chapterVerses.value.length) return
+  saveAllNotes()
+  walkActive.value = true
+}
+
 function openVerse(idx, text) {
   const ref = `${selectedBook.value} ${selectedChapter.value}:${idx + 1}`
   selectedVerse.value = { ref, text, book: selectedBook.value, chapter: selectedChapter.value, verseIdx: idx }
   detailSource.value = 'list'
   noteInput.value = getNote(selectedBook.value, selectedChapter.value, idx)
-}
-
-function openVerseFromSearch(r) {
-  selectedVerse.value = { ref: r.ref, text: r.text, book: r.book, chapter: r.chapter, verseIdx: r.verseIdx }
-  detailSource.value = 'search'
-  noteInput.value = getNote(r.book, r.chapter, r.verseIdx)
 }
 
 function prevVerse() {
@@ -306,6 +331,23 @@ function onFileUpload(e) {
   flex: 1;
   overflow-y: auto;
 }
+
+.palace-jump-wrap { position: relative; z-index: 2; }
+
+.palace-jump {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.palace-jump .search-input { flex: 1; }
+.jump-button { min-width: 48px; border: 0; border-radius: var(--radius-md); background: var(--primary); color: var(--primary-foreground); font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.jump-button:disabled { opacity: 0.45; cursor: default; }
+.jump-results { position: absolute; top: calc(100% - var(--space-1)); right: var(--space-4); left: var(--space-4); z-index: 3; max-height: min(360px, 55dvh); overflow-y: auto; list-style: none; margin: 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--card); box-shadow: var(--shadow-md); }
+.jump-results button { display: flex; width: 100%; flex-direction: column; gap: 2px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--foreground); cursor: pointer; padding: var(--space-3); text-align: left; font-family: var(--font-reading); font-size: var(--text-sm); }
+.jump-results li:last-child button { border-bottom: none; }
+.jump-results button:hover { background: var(--muted); }
+.jump-error { padding: var(--space-2) var(--space-4) 0; color: var(--warning); font-size: var(--text-sm); }
 
 .center {
   display: flex;
@@ -435,15 +477,6 @@ function onFileUpload(e) {
   cursor: default;
 }
 
-.in-path-badge {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--primary);
-  background: var(--success-surface);
-  border-radius: var(--radius-lg);
-  padding: 4px 10px;
-}
-
 .verse-card {
   background: var(--muted);
   margin: 16px;
@@ -510,6 +543,19 @@ function onFileUpload(e) {
 
 .chapter-bulk-header {
   justify-content: space-between;
+}
+
+.chapter-actions { display: flex; align-items: center; gap: 8px; }
+
+.walk-btn {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 10px;
+  cursor: pointer;
 }
 
 .save-all-btn {
@@ -671,13 +717,6 @@ function onFileUpload(e) {
   color: var(--warning);
   border-radius: 2px;
   padding: 0 1px;
-}
-
-.saved-dot {
-  color: var(--primary);
-  font-size: 10px;
-  margin-top: 4px;
-  flex-shrink: 0;
 }
 
 .note-pin {

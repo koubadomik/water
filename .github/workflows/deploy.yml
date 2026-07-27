@@ -25,24 +25,17 @@ jobs:
       - name: Build Vue app
         run: npm run build
         env:
-          VITE_BASE: /water/next/
-
-      # Rename vue.html → index.html so /next/ resolves cleanly
-      - name: Fix Vue app entry filename
-        run: |
-          if [ -f dist/vue.html ]; then
-            mv dist/vue.html dist/index.html
-          fi
+          VITE_BASE: /water/
 
       # Assemble deploy/ directory:
-      #   root  → old vanilla app
-      #   next/ → new Vue app
+      #   root        → new Vue app
+      #   legacy.html → original vanilla tools
       - name: Assemble deploy directory
         run: |
-          mkdir -p deploy/next
-          cp index.html style.css script.js memoryPalace.js dailyRoutine.js deploy/
+          mkdir -p deploy
+          cp -r dist/. deploy/
+          cp legacy.html style.css script.js memoryPalace.js dailyRoutine.js deploy/
           cp -r resources deploy/
-          cp -r dist/. deploy/next/
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v4

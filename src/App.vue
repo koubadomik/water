@@ -4,9 +4,10 @@
       <TopBar :streak="streak" :xp="xp" :weekly-progress="weeklyProgress" />
 
       <main class="main">
-        <HomeView    v-if="activeTab === 'home'"    />
+        <TodayView   v-if="activeTab === 'home'"    @navigate="activeTab = $event" />
         <PalaceView  v-else-if="activeTab === 'palace'"  />
-        <StudyView   v-else-if="activeTab === 'new'"     />
+        <SearchView  v-else-if="activeTab === 'search'"  />
+        <TestsView   v-else-if="activeTab === 'new'"     />
         <MoreView    v-else-if="activeTab === 'more'"    @navigate="activeTab = $event" />
       </main>
     </template>
@@ -17,13 +18,14 @@
 import { ref, computed, watch } from 'vue'
 import AppShell   from './components/AppShell.vue'
 import TopBar     from './components/TopBar.vue'
-import HomeView   from './views/HomeView.vue'
+import TodayView  from './views/TodayView.vue'
 import PalaceView from './views/PalaceView.vue'
-import StudyView  from './views/StudyView.vue'
+import SearchView from './views/SearchView.vue'
+import TestsView  from './views/TestsView.vue'
 import MoreView   from './views/MoreView.vue'
 import { useProgress } from './composables/useProgress.js'
 
-const TABS = ['home', 'palace', 'new', 'more']
+const TABS = ['home', 'palace', 'search', 'new', 'more']
 
 // Sections are addressable by hash — /next/#/new opens the study sets.
 function tabFromHash() {

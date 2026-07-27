@@ -122,6 +122,127 @@ describe('parseStudySet on the real paste', () => {
   })
 })
 
+// A second real paste. It differs from the first in ways that broke the parser:
+// "Odpoved>" instead of "Odpoved:", the first answer sharing the heading's line,
+// two numbered questions, and doubled spaces before some blanks.
+const SAMPLE_TWO = `1. ① Jaký pokrm Ježíš dává v době konce (době Zjevení)? Uveďte odkaz na kapitolu. ② Co je víno smilstva, které dává ďábel? Uveďte odkaz na kapitolu. ③ Kdo jsou pastoři z organizací, kteří dávají takové pokrmy?
+
+Odpověď> ① Zj 2, skrytá mana (Ježíšova krev a fyzické naplnění Zjevení)
+
+② Zj 17 (Zj 18), hadova (Satanova) doktrína, víno z divoké révy, což je ovoce stromu poznání dobrého a zlého
+
+③ Ježíš a jeho pastýř a ďábel a jeho pastor
+
+2. Napište, co je v čase naplnění Nového zákona pokrm, který dává Bůh, pokrm, který dává ďábel a pokrm, který dává ten, kdo vítězí.
+
+Odpověď > ①Boží pokrm: Zjevení, skrytá mana
+
+② ďáblův pokrm: víno smilstva
+
+③ Pokrm, který dává ten, kdo vítězí: pokrm v pravý čas
+
+Zjevení 14:1-5
+
+:1 A uviděl jsem, hle, Beránek stál na  (① hoře Sión ) a s ním (② sto čtyřicet čtyři tisíce ) těch, kdo mají na svých čelech napsáno  (③ jméno jeho ) i (④ jméno jeho Otce ).
+
+:2 A uslyšel jsem hlas z nebe jako (⑤ zvuk mnohých vod ) a jako (⑥ zvuk velikého hromu ). A hlas, který jsem uslyšel, byl jako hlas harfeníků, hrajících na své harfy.
+
+:3 Zpívali  (⑦ novou píseň ) (⑧ před trůnem, před těmi čtyřmi živými bytostmi a před staršími ). Nikdo se nemohl naučit té písni než těch sto čtyřicet čtyři tisíce (⑨ vykoupených ze země ).
+
+:4 To jsou ti, kteří se neposkvrnili se (⑩ ženami ), jsou to panici. To jsou ti, kteří (⑪ následují Beránka, kamkoli jde ). Ti byli vykoupeni z lidí jako (⑫ prvotiny ) Bohu a Beránkovi.
+
+:5 V jejich ústech  (⑬ nebyla nalezena lež ); jsou (⑭ bez úhony ).`
+
+describe('parseStudySet on the "Odpoved>" paste', () => {
+  const set = parseStudySet(SAMPLE_TWO)
+
+  test('splits it into two question cards', () => {
+    expect(set.cards).toHaveLength(2)
+    expect(set.cards.map((c) => c.number)).toEqual([1, 2])
+  })
+
+  test('keeps the answer that shares the heading line', () => {
+    expect(set.cards[0].answers[0]).toEqual({
+      marker: '①',
+      text: 'Zj 2, skrytá mana (Ježíšova krev a fyzické naplnění Zjevení)',
+    })
+  })
+
+  test('reads all three answers of the first question', () => {
+    expect(set.cards[0].answers.map((a) => a.marker)).toEqual(['①', '②', '③'])
+    expect(set.cards[0].answers[2].text).toBe('Ježíš a jeho pastýř a ďábel a jeho pastor')
+  })
+
+  test('handles "Odpoved >" with a space and a marker with none after it', () => {
+    expect(set.cards[1].answers[0]).toEqual({ marker: '①', text: 'Boží pokrm: Zjevení, skrytá mana' })
+    expect(set.cards[1].answers).toHaveLength(3)
+  })
+
+  test('does not leak the second question into the first', () => {
+    expect(set.cards[0].question).not.toContain('Napište')
+    expect(set.cards[1].question).toContain('Napište')
+  })
+
+  test('does not leak the heading into any answer', () => {
+    expect(JSON.stringify(set.cards)).not.toMatch(/Odpověď/)
+  })
+
+  test('reads the passage and all fourteen blanks', () => {
+    expect(set.title).toBe('Zjevení 14:1-5')
+    expect(set.passage.verses.map((v) => v.n)).toEqual([1, 2, 3, 4, 5])
+    expect(set.blankCount).toBe(14)
+  })
+
+  test('collapses the doubled spaces around blanks', () => {
+    const v1 = set.passage.verses.find((v) => v.n === 1)
+    expect(v1.raw).not.toMatch(/ {2}/)
+    expect(v1.segments[0].value).toBe('A uviděl jsem, hle, Beránek stál na ')
+  })
+
+  test('reads four blanks from a verse that has four', () => {
+    const v1 = set.passage.verses.find((v) => v.n === 1)
+    expect(v1.segments.filter((s) => s.type === 'blank').map((s) => s.value)).toEqual([
+      'hoře Sión',
+      'sto čtyřicet čtyři tisíce',
+      'jméno jeho',
+      'jméno jeho Otce',
+    ])
+  })
+
+  test('keeps two adjacent blanks separate', () => {
+    const v3 = set.passage.verses.find((v) => v.n === 3)
+    const blanks = v3.segments.filter((s) => s.type === 'blank')
+    expect(blanks[0].value).toBe('novou píseň')
+    expect(blanks[1].value).toBe('před trůnem, před těmi čtyřmi živými bytostmi a před staršími')
+  })
+})
+
+describe('parseStudySet accepts every heading form', () => {
+  const forms = ['Odpověď:', 'Odpověď :', 'Odpověď>', 'Odpověď >', 'Odpověď', 'odpoved:', 'Answer:']
+
+  test.each(forms)('%s on its own line', (heading) => {
+    const set = parseStudySet(`1. Q ①?\n\n${heading}\n\n① Alpha\n\n② Beta`)
+    expect(set.cards[0].answers).toEqual([
+      { marker: '①', text: 'Alpha' },
+      { marker: '②', text: 'Beta' },
+    ])
+  })
+
+  test.each(forms)('%s with the first answer on the same line', (heading) => {
+    const set = parseStudySet(`1. Q ①?\n\n${heading} ① Alpha\n\n② Beta`)
+    expect(set.cards[0].answers).toEqual([
+      { marker: '①', text: 'Alpha' },
+      { marker: '②', text: 'Beta' },
+    ])
+  })
+
+  test('a question opening with "Answer" is not mistaken for a heading', () => {
+    const set = parseStudySet('1. Answer the following ① question?\n\nOdpověď:\n\n① Alpha')
+    expect(set.cards[0].question).toBe('Answer the following ① question?')
+    expect(set.cards[0].answers).toEqual([{ marker: '①', text: 'Alpha' }])
+  })
+})
+
 describe('parseStudySet edge cases', () => {
   test('accepts a paste with questions only', () => {
     const set = parseStudySet('1. Who?\n\nOdpověď:\n\n① Someone')

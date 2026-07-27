@@ -1,102 +1,69 @@
 <template>
   <div class="more">
-    <!-- History view overlay -->
-    <HistoryView
-      v-if="showHistory"
-      @back="showHistory = false"
-      @navigate="emit('navigate', $event)"
-    />
+    <div class="menu-header">More</div>
 
-    <template v-else>
-    <!-- Header -->
-      <div class="menu-header">More</div>
+    <section class="menu-section" aria-labelledby="legacy-heading">
+      <h2 id="legacy-heading" class="section-title">Legacy tools</h2>
+      <p class="section-description">
+        These open the original app unchanged. The new app is the home for your daily practice,
+        Palace notes, and study material.
+      </p>
 
       <div class="menu-list">
-        <button class="menu-item" @click="showHistory = true">
-          <span class="menu-icon">📜</span>
-          <div class="menu-text">
-            <div class="menu-title">History</div>
-            <div class="menu-desc">Past paths and completed verses</div>
-          </div>
-          <span class="chevron">›</span>
-        </button>
-
-        <a class="menu-item" href="../" target="_blank">
+        <a class="menu-item" data-testid="legacy-byheart" href="legacy.html" target="_blank" rel="noopener">
           <span class="menu-icon">🧠</span>
-          <div class="menu-text">
-            <div class="menu-title">ByHeart</div>
-            <div class="menu-desc">Opens in original app ↗</div>
-          </div>
-          <span class="chevron">›</span>
+          <span class="menu-text">
+            <span class="menu-title">ByHeart</span>
+            <span class="menu-desc">Open the original memorisation tool ↗</span>
+          </span>
+          <span class="chevron" aria-hidden="true">›</span>
         </a>
 
-        <a class="menu-item" href="../" target="_blank">
+        <a class="menu-item" data-testid="legacy-drill" href="legacy.html" target="_blank" rel="noopener">
           <span class="menu-icon">✍️</span>
-          <div class="menu-text">
-            <div class="menu-title">Drill Mode</div>
-            <div class="menu-desc">Opens in original app ↗</div>
-          </div>
-          <span class="chevron">›</span>
+          <span class="menu-text">
+            <span class="menu-title">Drill Mode</span>
+            <span class="menu-desc">Open the original full-recall drill ↗</span>
+          </span>
+          <span class="chevron" aria-hidden="true">›</span>
         </a>
       </div>
+    </section>
 
-      <!-- Stats -->
-      <div class="stats-section">
-        <div class="stats-title">Your Stats</div>
+    <section class="util-section" aria-labelledby="settings-heading">
+      <h2 id="settings-heading" class="section-title">Settings</h2>
+      <button class="util-btn" @click="clearBibleCache">
+        🗑 Clear Bible cache
+        <span class="util-desc">Force a fresh Bible-data download next time you open Palace.</span>
+      </button>
+    </section>
 
-        <div class="level-row">
-          <span class="level-label">Level {{ level }}</span>
-          <div class="xp-bar-track">
-            <div class="xp-bar-fill" :style="{ width: xpBarPct + '%' }" />
-          </div>
-          <span class="xp-hint">{{ xpInLevel }} / 100 XP</span>
-        </div>
-
-        <div class="stat-row">
-          <span>🔥 Streak</span><strong>{{ streak }} days</strong>
-        </div>
-        <div class="stat-row">
-          <span>⚡ Total XP</span><strong>{{ xp }}</strong>
-        </div>
-        <div class="stat-row">
-          <span>📚 Verses saved</span><strong>{{ verses.length }}</strong>
-        </div>
-        <div class="stat-row">
-          <span>✅ Drills completed</span><strong>{{ drillsCompleted }}</strong>
-        </div>
-      </div>
-
-      <!-- Utility -->
-      <div class="util-section">
-        <div class="stats-title">Settings</div>
-        <button class="util-btn" @click="clearBibleCache">
-          🗑 Clear Bible cache
-          <span class="util-desc">Force re-download Bible data</span>
+    <section class="util-section" aria-labelledby="appearance-heading">
+      <h2 id="appearance-heading" class="section-title">Appearance</h2>
+      <div class="skin-list">
+        <button
+          v-for="skin in skins"
+          :key="skin.id"
+          class="skin-option"
+          :class="{ selected: selectedSkin === skin.id }"
+          @click="applyAppearance(skin.id)"
+        >
+          <span class="skin-swatches" aria-hidden="true">
+            <i v-for="color in skin.swatches" :key="color" :style="{ background: color }"></i>
+          </span>
+          <span class="skin-copy"><strong>{{ skin.name }}</strong><small>{{ skin.description }}</small></span>
+          <span v-if="selectedSkin === skin.id" class="skin-check">✓</span>
         </button>
       </div>
-    </template>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useVerseList } from '../composables/useVerseList.js'
-import { useProgress } from '../composables/useProgress.js'
-import HistoryView from './HistoryView.vue'
+import { useAppearance } from '../composables/useAppearance.js'
 
-const emit = defineEmits(['navigate'])
+const { skins, selectedSkin, applyAppearance } = useAppearance()
 
-const { verses } = useVerseList()
-const { streak, xp, state: progressState } = useProgress()
-const showHistory = ref(false)
-
-// --- Level / stats ---
-const level = computed(() => Math.floor((xp.value ?? 0) / 100) + 1)
-const xpInLevel = computed(() => (xp.value ?? 0) % 100)
-const xpBarPct = computed(() => xpInLevel.value)
-const drillsCompleted = computed(() => verses.value.filter(v => v.drilledAt).length)
-
-// --- Utility ---
 function clearBibleCache() {
   if (confirm('Clear the cached Bible data? It will be re-downloaded next time you open the Palace.')) {
     localStorage.removeItem('bibleJSON')
@@ -113,7 +80,6 @@ function clearBibleCache() {
   overflow-y: auto;
 }
 
-/* Menu */
 .menu-header {
   padding: 20px 16px 8px;
   font-size: 22px;
@@ -121,7 +87,33 @@ function clearBibleCache() {
   color: var(--foreground);
 }
 
-.menu-list { display: flex; flex-direction: column; gap: 1px; padding: 8px 0; }
+.menu-section,
+.util-section {
+  padding: 16px;
+}
+
+.section-title {
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.section-description {
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.menu-list {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
 
 .menu-item {
   display: flex;
@@ -139,78 +131,13 @@ function clearBibleCache() {
   box-sizing: border-box;
 }
 
+.menu-item:last-child { border-bottom: none; }
+
 .menu-icon { font-size: 28px; }
 .menu-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .menu-title { font-size: 16px; font-weight: 600; color: var(--foreground); }
 .menu-desc { font-size: 13px; color: var(--muted-foreground); }
 .chevron { font-size: 22px; color: var(--muted-foreground); }
-
-/* Stats */
-.stats-section {
-  padding: 20px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.stats-title {
-  font-size: 13px;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 4px;
-}
-
-.level-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  background: var(--muted);
-  border-radius: var(--radius-md);
-}
-
-.level-label {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--primary);
-  min-width: 56px;
-}
-
-.xp-bar-track {
-  flex: 1;
-  height: 8px;
-  background: var(--muted);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.xp-bar-fill {
-  height: 100%;
-  background: var(--primary);
-  border-radius: var(--radius-sm);
-  transition: width 0.4s ease;
-}
-
-.xp-hint { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
-
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 15px;
-  color: var(--foreground);
-}
-
-.stat-row strong { color: var(--foreground); font-size: 16px; }
-
-/* Utility */
-.util-section {
-  padding: 0 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
 .util-btn {
   display: flex;
@@ -231,4 +158,13 @@ function clearBibleCache() {
   font-size: 12px;
   color: var(--muted-foreground);
 }
+
+.skin-list { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.skin-option { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px; border: 0; border-bottom: 1px solid var(--border); background: var(--card); color: var(--foreground); text-align: left; cursor: pointer; }
+.skin-option:last-child { border-bottom: 0; }
+.skin-option.selected { background: var(--accent); }
+.skin-swatches { display: flex; overflow: hidden; width: 38px; height: 28px; flex: 0 0 auto; border: 1px solid var(--border); border-radius: 7px; }
+.skin-swatches i { flex: 1; }
+.skin-copy { display: flex; flex: 1; flex-direction: column; gap: 1px; }
+.skin-copy strong { font-size: 14px; }.skin-copy small { color: var(--muted-foreground); font-size: 12px; }.skin-check { color: var(--primary); font-weight: 700; }
 </style>

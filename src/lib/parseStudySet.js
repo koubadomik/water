@@ -20,7 +20,14 @@ const MARKER_LINE = new RegExp(`^\\s*([${MARKER_CLASS}])\\s*(.*)$`)
 const BLANK = new RegExp(`\\(\\s*([${MARKER_CLASS}])\\s*([^)]*?)\\s*\\)`, 'g')
 const VERSE_LINE = /^\s*:(\d+)\s*(.*)$/
 const QUESTION_LINE = /^\s*(\d+)\s*[.)]\s*(.+)$/
-const ANSWER_HEADING = /^\s*(odpověď|odpoved|answer)\s*:?\s*$/i
+// "Odpoved:", "Odpoved >", "Odpoved>", or the word alone — and the first answer
+// often rides on the same line, so this matches a prefix. The delimiter is
+// required unless the word ends the line, otherwise a question opening with
+// "Answer the following" would read as a heading.
+const ANSWER_HEADING = new RegExp(
+  `^\\s*(?:odpověď|odpoved|answer)\\s*(?:[:>]+\\s*|$|(?=[${MARKER_CLASS}]))`,
+  'i',
+)
 
 export function markerNumber(marker) {
   return marker.codePointAt(0) - 0x2460 + 1
@@ -101,17 +108,23 @@ function parseCards(lines) {
   }
 
   for (const line of lines) {
-    const text = line.trim()
+    let text = line.trim()
     if (!text) continue
 
-    if (ANSWER_HEADING.test(text)) {
+    const heading = text.match(ANSWER_HEADING)
+    if (heading) {
       mode = 'answers'
-      continue
+      text = text.slice(heading[0].length).trim()
+      if (!text) continue // heading stood alone; the answers follow below
     }
 
     const numbered = text.match(QUESTION_LINE)
-    // A "1." line starts a new card, but only once we're past the previous answers.
-    if (numbered && (mode === 'answers' || !current)) {
+    // A "1." line opens a new card once the previous one has answers, or when
+    // its number differs — a question's own wrapped lines never do either.
+    if (
+      numbered &&
+      (mode === 'answers' || !current || current.answers.length > 0 || Number(numbered[1]) !== current.number)
+    ) {
       push()
       current = { number: Number(numbered[1]), question: [numbered[2]], answers: [] }
       mode = 'question'
@@ -152,7 +165,10 @@ function parseVerses(lines) {
       verses[verses.length - 1].raw += ' ' + text
     }
   }
-  return verses.map((v) => ({ n: v.n, raw: v.raw, segments: splitBlanks(v.raw) }))
+  return verses.map((v) => {
+    const raw = v.raw.replace(/\s+/g, ' ').trim()
+    return { n: v.n, raw, segments: splitBlanks(raw) }
+  })
 }
 
 function buildTitle(passage, cards) {

@@ -131,6 +131,47 @@
   --ring: oklch(0.76 0.085 62 / 45%);
 }
 
+/* ── Appearance skins ─────────────────────────────────────── */
+:root[data-skin='paper'] {
+  --background: #fffdf8; --foreground: #352c25; --card: #ffffff; --card-foreground: #352c25;
+  --muted: #f5f0e7; --muted-foreground: #75685c; --primary: #755d49; --primary-foreground: #fffdf8;
+  --accent: #f3e8d5; --accent-foreground: #5c4636; --success: #4d7c59; --success-surface: #e5f0e4;
+  --warning: #a76b2f; --warning-surface: #f9ecd8; --border: #e4d6c2; --input: #dfd0bb; --ring: #755d4973;
+  --palace-background: linear-gradient(135deg, #f9f3e8, #f1e7d6); --palace-page: #fffdf8; --palace-line: #e4d6c2; --palace-ink: #352c25; --palace-note: #496582; --palace-muted: #836a51;
+}
+
+:root[data-skin='midnight'] {
+  --background: #101827; --foreground: #edf1fa; --card: #19243a; --card-foreground: #edf1fa;
+  --muted: #23304a; --muted-foreground: #aebbd3; --primary: #d8b36a; --primary-foreground: #172033;
+  --accent: #303d58; --accent-foreground: #f2d89f; --success: #85c49a; --success-surface: #243f3a;
+  --warning: #e7c27c; --warning-surface: #443a28; --border: #35435d; --input: #3d4b65; --ring: #d8b36a73;
+  --palace-background: linear-gradient(135deg, #101827, #1b2941); --palace-page: #172238; --palace-line: #3a4b68; --palace-ink: #edf1fa; --palace-note: #a9c3ed; --palace-muted: #d8b36a;
+}
+
+:root[data-skin='forest'] {
+  --background: #f7f4e9; --foreground: #293b2d; --card: #fffef8; --card-foreground: #293b2d;
+  --muted: #e9eddf; --muted-foreground: #657364; --primary: #41634d; --primary-foreground: #fbfaf1;
+  --accent: #dce6ce; --accent-foreground: #34523f; --success: #4d7850; --success-surface: #e1eedc;
+  --warning: #99723d; --warning-surface: #f4ebd5; --border: #ccd5bf; --input: #c2cdb7; --ring: #41634d73;
+  --palace-background: linear-gradient(135deg, #edf0df, #dbe5d2); --palace-page: #fffef6; --palace-line: #cad4bc; --palace-ink: #293b2d; --palace-note: #466f58; --palace-muted: #5f7658;
+}
+
+:root[data-skin='dawn'] {
+  --background: #fff7f5; --foreground: #422d32; --card: #fffdfc; --card-foreground: #422d32;
+  --muted: #f8e9e6; --muted-foreground: #82646a; --primary: #87475a; --primary-foreground: #fff8f7;
+  --accent: #f2d7d7; --accent-foreground: #70394a; --success: #5d8065; --success-surface: #e4f0e2;
+  --warning: #aa7040; --warning-surface: #faeadb; --border: #ecd1d0; --input: #e6c5c5; --ring: #87475a73;
+  --palace-background: linear-gradient(135deg, #fff2ef, #f5dfdc); --palace-page: #fffaf8; --palace-line: #ebd1cd; --palace-ink: #422d32; --palace-note: #8d5365; --palace-muted: #9b6266;
+}
+
+:root[data-skin='ink'] {
+  --background: #ffffff; --foreground: #202020; --card: #ffffff; --card-foreground: #202020;
+  --muted: #f2f2f2; --muted-foreground: #6a6a6a; --primary: #202020; --primary-foreground: #ffffff;
+  --accent: #e9e9e9; --accent-foreground: #202020; --success: #3f6b4a; --success-surface: #e7f0e9;
+  --warning: #8a612d; --warning-surface: #f5ead8; --border: #d7d7d7; --input: #cacaca; --ring: #20202066;
+  --palace-background: #f3f3f3; --palace-page: #ffffff; --palace-line: #d5d5d5; --palace-ink: #202020; --palace-note: #444444; --palace-muted: #666666;
+}
+
 /* ── Legacy aliases ───────────────────────────────────────────
    The pre-existing components still ask for these names. They
    now resolve to the new palette, so nothing looks stale while

@@ -52,8 +52,32 @@ export function useReview() {
     ]
   }
 
+  // Adding a range is one write, so the list doesn't churn per verse.
+  function addVerses(list = []) {
+    const seen = new Set(state.value.map((v) => v.ref))
+    const fresh = list
+      .filter((v) => v?.ref && !seen.has(v.ref))
+      .map(({ ref, text, book, chapter, verseIdx }) => ({
+        ref,
+        text,
+        book,
+        chapter,
+        verseIdx,
+        rung: 0,
+        due: dayStr(),
+        lapses: 0,
+        lastResult: null,
+      }))
+    if (fresh.length) state.value = [...state.value, ...fresh]
+    return fresh.length
+  }
+
   function removeVerse(ref) {
     state.value = state.value.filter((v) => v.ref !== ref)
+  }
+
+  function hasVerse(ref) {
+    return state.value.some((v) => v.ref === ref)
   }
 
   // result: 'got' | 'shaky' | 'lost'
@@ -71,7 +95,7 @@ export function useReview() {
     })
   }
 
-  return { verses, due, addVerse, removeVerse, grade }
+  return { verses, due, addVerse, addVerses, removeVerse, hasVerse, grade }
 }
 
 // verseList_v1 held one row per drill slot — each verse repeated 3× with a

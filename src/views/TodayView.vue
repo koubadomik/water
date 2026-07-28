@@ -106,11 +106,11 @@
             <button
                 class="td-item"
                 data-testid="today-item"
-                :class="{ done: isDoneToday(item.id) }"
+                :class="{ done: isDoneToday(item.id), known: isKnown(item.id) }"
                 :disabled="isDoneToday(item.id)"
                 @click="start(item)"
               >
-                <span class="td-mark">{{ isDoneToday(item.id) ? '✓' : '○' }}</span>
+                <span class="td-mark">{{ isKnown(item.id) ? '✓' : '○' }}</span>
                 <span class="td-item-label">{{ item.label }}</span>
                 <span class="td-kind">{{ kindLabel(item) }}</span>
             </button>
@@ -294,10 +294,14 @@ function leaveActive() {
 
 .td-item.done {
   color: var(--muted-foreground);
-  background: transparent;
+  background: color-mix(in srgb, var(--card) 55%, transparent);
 }
 
-.td-item.done .td-item-label { text-decoration: line-through; }
+.td-item.known .td-mark {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
 
 .td-mark {
   display: grid;

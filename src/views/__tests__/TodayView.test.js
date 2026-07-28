@@ -96,6 +96,17 @@ describe('TodayView', () => {
     expect(w.text()).not.toContain('Review')
   })
 
+  test('keeps known status visible in Today after a new day', async () => {
+    const w = await mountToday({
+      verses: [{ ref: 'John 3:16', text: 'x', rung: 2, due: addDays(-2), lapses: 0, lastReviewed: addDays(-1) }],
+      settings: { minutes: 60, newPerDay: 10 },
+    })
+    const item = w.find('[data-testid="today-item"]')
+    expect(item.classes()).toContain('known')
+    expect(item.text()).toContain('✓')
+    expect(item.attributes('disabled')).toBeUndefined()
+  })
+
   test('a known verse can be marked as learning again from the list', async () => {
     const w = await mountToday({
       verses: [{ ref: 'John 3:16', text: 'x', rung: 2, due: addDays(-2), lapses: 0 }],

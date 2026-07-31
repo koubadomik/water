@@ -7,7 +7,7 @@ import './styles/theme.css'
 import { applySavedAppearance } from './composables/useAppearance.js'
 import ThankApp from './ThankApp.vue'
 
-applySavedAppearance()
+applySavedAppearance('thank')
 createApp(ThankApp)
   .use(MotionPlugin)
   .use(Particles, { init: async (engine) => { await loadStarsPreset(engine); await loadStarShape(engine) } })

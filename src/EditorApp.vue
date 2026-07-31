@@ -11,6 +11,8 @@
       </select>
       <select v-model="textSize" class="tool-select" @change="savePrefs"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select>
       <select v-model="pageWidth" class="tool-select" @change="savePrefs"><option value="narrow">Narrow</option><option value="reading">Reading</option><option value="wide">Wide</option></select>
+      <select v-model="typingSound" class="tool-select sound-select" @change="savePrefs"><option value="off">Silent keys</option><option value="classic">Typewriter · Classic</option><option value="electric">Typewriter · Electric</option><option value="mechanical">Keyboard · Mechanical</option><option value="soft">Keyboard · Soft</option><option value="pencil">Pencil · Paper</option><option value="retro">Retro computer · 8-bit</option></select>
+      <label class="sound-volume">Sound {{ Math.round(typingVolume * 100) }}%<input v-model.number="typingVolume" type="range" min="0" max="2.5" step=".05" @change="savePrefs" /></label>
       <button class="tool-button" @mousedown.prevent="command('undo')">Undo</button>
       <button class="tool-button" @mousedown.prevent="command('redo')">Redo</button>
       <button class="tool-button" @click="copy">Copy</button>
@@ -41,10 +43,12 @@ import { resolveReference } from './lib/reference.js'
 const props = defineProps({
   storageKey: { type: String, default: 'zenEditorHtml' },
   placeholder: { type: String, default: 'Start writing…' },
+  appearanceNamespace: { type: String, default: 'main' },
+  preferencesKey: { type: String, default: 'zenEditorPrefs' },
 })
 const emit = defineEmits(['saved'])
 const editor = ref(null)
-const { applyAppearance, applyFont, fonts, selectedFont: font, selectedSkin: skin, skins } = useAppearance()
+const { applyAppearance, applyFont, fonts, selectedFont: font, selectedSkin: skin, skins } = useAppearance(props.appearanceNamespace)
 const copied = ref(false)
 const colors = ['#b64c4c', '#c08a28', '#4c8a69', '#477cac']
 const customColor = ref('#72558c')
@@ -52,22 +56,35 @@ const toolsOpen = ref(false)
 const selectionOpen = ref(false)
 const selectionStyle = ref({})
 const verseSuggestionStyle = ref({})
-const prefs = JSON.parse(localStorage.getItem('zenEditorPrefs') || '{}')
+const prefs = JSON.parse(localStorage.getItem(props.preferencesKey) || '{}')
 const textSize = ref(prefs.textSize || 'medium')
 const pageWidth = ref(prefs.pageWidth || 'reading')
+const typingSound = ref(prefs.typingSound || 'off')
+const storedTypingVolume = Number(prefs.typingVolume)
+const typingVolume = ref(Number.isFinite(storedTypingVolume) && prefs.typingVolume !== undefined ? (prefs.typingVolumeScale === 'full' ? storedTypingVolume : storedTypingVolume <= .2 ? storedTypingVolume * 12.5 : storedTypingVolume) : 1.4)
 const verseSuggestion = ref(null)
 const referenceRange = ref(null)
 const historySwipe = ref(null)
 const { bible } = useBible()
+const typewriterUrls = ['typewriter1.wav', 'typewriter2.wav', 'typewriter3.wav', 'typewriter4.wav'].map((name) => `${import.meta.env.BASE_URL}sounds/${name}`)
+const soundUrls = [...typewriterUrls, `${import.meta.env.BASE_URL}sounds/pencil-write.ogg`, `${import.meta.env.BASE_URL}sounds/retro-key.wav`]
+let typingContext
+let typingBuffers = { typewriter: [], pencil: null, retro: null }
+let lastKeySound = 0
 
-onMounted(async () => { editor.value.innerHTML = localStorage.getItem(props.storageKey) || ''; await nextTick(); editor.value.focus() })
+onMounted(async () => {
+  editor.value.innerHTML = localStorage.getItem(props.storageKey) || ''
+  await nextTick()
+  editor.value.focus()
+  preloadTypingSounds()
+})
 function save() {
   const html = editor.value.innerHTML
   localStorage.setItem(props.storageKey, html)
   emit('saved', html)
 }
-function onInput() { save(); findVerseSuggestion() }
-function savePrefs() { localStorage.setItem('zenEditorPrefs', JSON.stringify({ textSize: textSize.value, pageWidth: pageWidth.value })) }
+function onInput(event) { save(); findVerseSuggestion(); playTypingSound(event) }
+function savePrefs() { localStorage.setItem(props.preferencesKey, JSON.stringify({ textSize: textSize.value, pageWidth: pageWidth.value, typingSound: typingSound.value, typingVolume: typingVolume.value, typingVolumeScale: 'full' })) }
 function command(name, value) { editor.value.focus(); document.execCommand(name, false, value); save() }
 function clearFormatting() {
   editor.value.focus()
@@ -203,8 +220,54 @@ function markdown(node) {
 }
 async function copy() { await navigator.clipboard.writeText(markdown(editor.value).trim()); copied.value = true; setTimeout(() => { copied.value = false }, 1200) }
 function clear() { if (confirm('Clear this note?')) { editor.value.innerHTML = ''; save() } }
+async function preloadTypingSounds() {
+  try {
+    typingContext ||= new AudioContext()
+    const buffers = await Promise.all(soundUrls.map(async (url) => typingContext.decodeAudioData(await (await fetch(url)).arrayBuffer())))
+    typingBuffers = { typewriter: buffers.slice(0, 4), pencil: buffers[4], retro: buffers[5] }
+  } catch { typingBuffers = { typewriter: [], pencil: null, retro: null } }
+}
+function playTypingSound(event) {
+  if (typingSound.value === 'off' || event.inputType === 'insertFromPaste') return
+  if (!event.inputType?.startsWith('insert') && !event.inputType?.startsWith('delete')) return
+  if (performance.now() - lastKeySound < 28) return
+  lastKeySound = performance.now()
+  try {
+    typingContext ||= new AudioContext()
+    typingContext.resume()
+    const group = typingSound.value === 'pencil' ? [typingBuffers.pencil] : typingSound.value === 'retro' ? [typingBuffers.retro] : typingBuffers.typewriter
+    if (!group.filter(Boolean).length) return
+    const now = typingContext.currentTime
+    const preset = {
+      classic: { volume: .34, rate: .96, tone: 4300 },
+      electric: { volume: .26, rate: 1.12, tone: 7000 },
+      mechanical: { volume: .30, rate: .9, tone: 3400 },
+      soft: { volume: .14, rate: .78, tone: 1700 },
+      pencil: { volume: .42, rate: 1.04, tone: 2600 },
+      retro: { volume: .23, rate: 1.32, tone: 9000 },
+    }[typingSound.value]
+    if (!preset) return
+    const source = typingContext.createBufferSource()
+    const gain = typingContext.createGain()
+    const compressor = typingContext.createDynamicsCompressor()
+    const filter = typingContext.createBiquadFilter()
+    source.buffer = group[Math.floor(Math.random() * group.length)]
+    source.playbackRate.value = (event.inputType.startsWith('delete') ? preset.rate * .77 : preset.rate) * (.96 + Math.random() * .08)
+    filter.type = 'lowpass'
+    filter.frequency.value = preset.tone
+    gain.gain.setValueAtTime(preset.volume * typingVolume.value * 28, now)
+    gain.gain.exponentialRampToValueAtTime(.0001, now + .1)
+    compressor.threshold.value = -22
+    compressor.knee.value = 18
+    compressor.ratio.value = 10
+    compressor.attack.value = .003
+    compressor.release.value = .08
+    source.connect(filter).connect(gain).connect(compressor).connect(typingContext.destination)
+    source.start(now, 0, .11)
+  } catch { /* iPhone may keep audio silent until it receives a user interaction */ }
+}
 </script>
 
 <style scoped>
-.editor-shell { position:relative; min-height:100dvh; background:var(--background); color:var(--foreground); }.editor-tools { position:fixed; z-index:8; top:max(8px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); }.tools-menu { position:absolute; top:calc(100% + 8px); left:50%; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; width:min(360px,calc(100vw - 24px)); padding:10px; transform:translateX(-50%); border:1px solid var(--border); border-radius:var(--radius-lg); background:color-mix(in srgb,var(--card) 94%,transparent); box-shadow:var(--shadow-lg); backdrop-filter:blur(16px); }.tool-select,.tool-button,.format-button { min-height:32px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--card); color:var(--foreground); font:inherit; font-size:12px; cursor:pointer; }.tool-select { max-width:104px; padding:0 6px; }.tool-button,.format-button { padding:0 9px; }.menu { border-radius:var(--radius-full); font-weight:700; }.bold { font-family:Georgia,serif; font-size:17px; font-weight:800; }.italic { font-family:Georgia,serif; font-size:16px; font-style:italic; }.underline { text-decoration:underline; }.quote { font-family:Georgia,serif; font-size:19px; line-height:1; }.selection-tools { position:fixed; z-index:6; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--card); box-shadow:var(--shadow-lg); }.color-button,.color-picker { width:22px; height:22px; padding:0; border:2px solid var(--card); border-radius:50%; box-shadow:0 0 0 1px var(--border); cursor:pointer; }.verse-suggestion { position:fixed; z-index:7; box-sizing:border-box; max-width:calc(100vw - 24px); max-height:76px; overflow:hidden; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--card); color:var(--foreground); box-shadow:var(--shadow-lg); padding:10px 12px; font-family:var(--font-reading); font-size:13px; text-align:left; text-overflow:ellipsis; white-space:nowrap; }.danger { color:var(--destructive); }.page { min-height:100dvh; margin:0 auto; padding:54px max(24px,7vw) 120px; outline:0; font-family:var(--font-reading); line-height:1.8; touch-action:pan-y; white-space:pre-wrap; }.page :deep(blockquote) { margin:1.2em 0; padding:.25em 1em; border-left:3px solid var(--primary); color:var(--muted-foreground); font-style:italic; }.width-narrow { max-width:560px; }.width-reading { max-width:760px; }.width-wide { max-width:1100px; }.size-small { font-size:clamp(17px,4.2vw,21px); }.size-medium { font-size:clamp(19px,4.8vw,25px); }.size-large { font-size:clamp(22px,5.5vw,30px); }.page:empty::before { content:attr(data-placeholder); color:var(--muted-foreground); pointer-events:none; }.copied { position:fixed; top:58px; left:50%; z-index:4; transform:translateX(-50%); padding:6px 10px; border-radius:var(--radius-full); background:var(--primary); color:var(--primary-foreground); font-size:12px; }
+.editor-shell { position:relative; min-height:100dvh; background:var(--background); color:var(--foreground); }.editor-tools { position:fixed; z-index:8; top:max(8px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); }.tools-menu { position:absolute; top:calc(100% + 8px); left:50%; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; width:min(360px,calc(100vw - 24px)); padding:10px; transform:translateX(-50%); border:1px solid var(--border); border-radius:var(--radius-lg); background:color-mix(in srgb,var(--card) 94%,transparent); box-shadow:var(--shadow-lg); backdrop-filter:blur(16px); }.tool-select,.tool-button,.format-button { min-height:32px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--card); color:var(--foreground); font:inherit; font-size:12px; cursor:pointer; }.tool-select { max-width:104px; padding:0 6px; }.sound-select { max-width:150px; }.sound-volume { display:grid; width:132px; gap:2px; color:var(--muted-foreground); font-size:11px; }.sound-volume input { width:100%; accent-color:var(--primary); }.tool-button,.format-button { padding:0 9px; }.menu { border-radius:var(--radius-full); font-weight:700; }.bold { font-family:Georgia,serif; font-size:17px; font-weight:800; }.italic { font-family:Georgia,serif; font-size:16px; font-style:italic; }.underline { text-decoration:underline; }.quote { font-family:Georgia,serif; font-size:19px; line-height:1; }.selection-tools { position:fixed; z-index:6; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--card); box-shadow:var(--shadow-lg); }.color-button,.color-picker { width:22px; height:22px; padding:0; border:2px solid var(--card); border-radius:50%; box-shadow:0 0 0 1px var(--border); cursor:pointer; }.verse-suggestion { position:fixed; z-index:7; box-sizing:border-box; max-width:calc(100vw - 24px); max-height:76px; overflow:hidden; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--card); color:var(--foreground); box-shadow:var(--shadow-lg); padding:10px 12px; font-family:var(--font-reading); font-size:13px; text-align:left; text-overflow:ellipsis; white-space:nowrap; }.danger { color:var(--destructive); }.page { min-height:100dvh; margin:0 auto; padding:54px max(24px,7vw) 120px; outline:0; font-family:var(--font-reading); line-height:1.8; touch-action:pan-y; white-space:pre-wrap; }.page :deep(blockquote) { margin:1.2em 0; padding:.25em 1em; border-left:3px solid var(--primary); color:var(--muted-foreground); font-style:italic; }.width-narrow { max-width:560px; }.width-reading { max-width:760px; }.width-wide { max-width:1100px; }.size-small { font-size:clamp(17px,4.2vw,21px); }.size-medium { font-size:clamp(19px,4.8vw,25px); }.size-large { font-size:clamp(22px,5.5vw,30px); }.page:empty::before { content:attr(data-placeholder); color:var(--muted-foreground); pointer-events:none; }.copied { position:fixed; top:58px; left:50%; z-index:4; transform:translateX(-50%); padding:6px 10px; border-radius:var(--radius-full); background:var(--primary); color:var(--primary-foreground); font-size:12px; }
 </style>

@@ -39,8 +39,6 @@ export const fonts = [
   { id: 'mono', name: 'Monospace', sample: '01' },
 ]
 
-const STORAGE_KEY = 'appearanceSkin'
-const FONT_STORAGE_KEY = 'appearanceFont'
 const selectedSkin = ref('paper')
 const selectedFont = ref('theme')
 
@@ -48,32 +46,40 @@ function validSkin(id) {
   return skins.some(skin => skin.id === id) ? id : 'paper'
 }
 
-export function applyAppearance(id) {
+function storageKey(namespace, key) {
+  return namespace === 'main' ? `appearance${key}` : `${namespace}Appearance${key}`
+}
+
+export function applyAppearance(id, namespace = 'main') {
   const skin = validSkin(id)
   selectedSkin.value = skin
   if (typeof document !== 'undefined') document.documentElement.dataset.skin = skin
-  try { localStorage.setItem(STORAGE_KEY, skin) } catch { /* storage is optional */ }
+  try { localStorage.setItem(storageKey(namespace, 'Skin'), skin) } catch { /* storage is optional */ }
 }
 
-export function applyFont(id) {
+export function applyFont(id, namespace = 'main') {
   const font = fonts.some(item => item.id === id) ? id : 'theme'
   selectedFont.value = font
   if (typeof document !== 'undefined') {
     if (font === 'theme') delete document.documentElement.dataset.font
     else document.documentElement.dataset.font = font
   }
-  try { localStorage.setItem(FONT_STORAGE_KEY, font) } catch { /* storage is optional */ }
+  try { localStorage.setItem(storageKey(namespace, 'Font'), font) } catch { /* storage is optional */ }
 }
 
-export function applySavedAppearance() {
+export function applySavedAppearance(namespace = 'main') {
   let saved = 'paper'
-  try { saved = localStorage.getItem(STORAGE_KEY) || 'paper' } catch { /* storage is optional */ }
-  applyAppearance(saved)
+  try { saved = localStorage.getItem(storageKey(namespace, 'Skin')) || 'paper' } catch { /* storage is optional */ }
+  applyAppearance(saved, namespace)
   let savedFont = 'theme'
-  try { savedFont = localStorage.getItem(FONT_STORAGE_KEY) || 'theme' } catch { /* storage is optional */ }
-  applyFont(savedFont)
+  try { savedFont = localStorage.getItem(storageKey(namespace, 'Font')) || 'theme' } catch { /* storage is optional */ }
+  applyFont(savedFont, namespace)
 }
 
-export function useAppearance() {
-  return { skins, fonts, selectedSkin, selectedFont, applyAppearance, applyFont }
+export function useAppearance(namespace = 'main') {
+  return {
+    skins, fonts, selectedSkin, selectedFont,
+    applyAppearance: (id) => applyAppearance(id, namespace),
+    applyFont: (id) => applyFont(id, namespace),
+  }
 }

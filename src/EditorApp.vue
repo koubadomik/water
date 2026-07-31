@@ -22,12 +22,13 @@
       <button class="format-button italic" @mousedown.prevent="command('italic')">I</button>
       <button class="format-button underline" @mousedown.prevent="command('underline')">U</button>
       <button class="format-button quote" title="Quote" @mousedown.prevent="command('formatBlock', 'blockquote')">❝</button>
+      <button class="format-button plain" title="Clear formatting" @mousedown.prevent="clearFormatting">T×</button>
       <button v-for="color in colors" :key="color" class="color-button" :style="{ background: color }" @mousedown.prevent="command('foreColor', color)" />
       <input v-model="customColor" class="color-picker" type="color" @input="command('foreColor', customColor)" />
     </div>
     <p v-if="copied" class="copied">Copied</p>
     <button v-if="verseSuggestion" class="verse-suggestion" :style="verseSuggestionStyle" @mousedown.prevent="insertVerse">Insert {{ verseSuggestion.ref }}: {{ verseSuggestion.text }}</button>
-    <article ref="editor" class="page" :class="[`size-${textSize}`, `width-${pageWidth}`]" contenteditable="true" spellcheck="true" data-placeholder="Start writing…" @input="onInput" @mouseup="checkSelection" @keyup="checkSelection" @pointerdown="startHistorySwipe" @pointerup="finishHistorySwipe" @pointercancel="historySwipe = null" />
+    <article ref="editor" class="page" :class="[`size-${textSize}`, `width-${pageWidth}`]" contenteditable="true" spellcheck="true" :data-placeholder="placeholder" @input="onInput" @paste="pasteClean" @mouseup="checkSelection" @keyup="checkSelection" @pointerdown="startHistorySwipe" @pointerup="finishHistorySwipe" @pointercancel="historySwipe = null" />
   </main>
 </template>
 
@@ -37,7 +38,11 @@ import { useAppearance } from './composables/useAppearance.js'
 import { useBible } from './composables/useBible.js'
 import { resolveReference } from './lib/reference.js'
 
-const KEY = 'zenEditorHtml'
+const props = defineProps({
+  storageKey: { type: String, default: 'zenEditorHtml' },
+  placeholder: { type: String, default: 'Start writing…' },
+})
+const emit = defineEmits(['saved'])
 const editor = ref(null)
 const { applyAppearance, applyFont, fonts, selectedFont: font, selectedSkin: skin, skins } = useAppearance()
 const copied = ref(false)
@@ -55,11 +60,72 @@ const referenceRange = ref(null)
 const historySwipe = ref(null)
 const { bible } = useBible()
 
-onMounted(async () => { editor.value.innerHTML = localStorage.getItem(KEY) || ''; await nextTick(); editor.value.focus() })
-function save() { localStorage.setItem(KEY, editor.value.innerHTML) }
+onMounted(async () => { editor.value.innerHTML = localStorage.getItem(props.storageKey) || ''; await nextTick(); editor.value.focus() })
+function save() {
+  const html = editor.value.innerHTML
+  localStorage.setItem(props.storageKey, html)
+  emit('saved', html)
+}
 function onInput() { save(); findVerseSuggestion() }
 function savePrefs() { localStorage.setItem('zenEditorPrefs', JSON.stringify({ textSize: textSize.value, pageWidth: pageWidth.value })) }
 function command(name, value) { editor.value.focus(); document.execCommand(name, false, value); save() }
+function clearFormatting() {
+  editor.value.focus()
+  document.execCommand('removeFormat', false)
+  document.execCommand('formatBlock', false, 'p')
+  save()
+}
+function pasteClean(event) {
+  const clipboard = event.clipboardData
+  if (!clipboard) return
+  event.preventDefault()
+  const html = clipboard.getData('text/html')
+  const fragment = document.createDocumentFragment()
+  if (html) {
+    const source = document.createElement('div')
+    source.innerHTML = html
+    for (const child of source.childNodes) fragment.append(cleanNode(child))
+  } else {
+    const text = clipboard.getData('text/plain')
+    for (const line of text.split(/\r?\n/)) {
+      if (fragment.childNodes.length) fragment.append(document.createElement('br'))
+      fragment.append(document.createTextNode(line))
+    }
+  }
+  const selection = window.getSelection()
+  if (!selection?.rangeCount) return
+  const range = selection.getRangeAt(0)
+  const last = fragment.lastChild
+  range.deleteContents()
+  range.insertNode(fragment)
+  if (last) {
+    range.setStartAfter(last)
+    range.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+  save()
+}
+function cleanNode(node) {
+  if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent)
+  if (node.nodeType !== Node.ELEMENT_NODE) return document.createDocumentFragment()
+  const content = document.createDocumentFragment()
+  for (const child of node.childNodes) content.append(cleanNode(child))
+  const tag = node.tagName.toLowerCase()
+  if (tag === 'br') return document.createElement('br')
+  let result = content
+  const wrap = (name) => {
+    const element = document.createElement(name)
+    element.append(result)
+    result = element
+  }
+  if (tag === 'strong' || tag === 'b' || Number(node.style.fontWeight) >= 600 || node.style.fontWeight === 'bold') wrap('strong')
+  if (tag === 'em' || tag === 'i' || node.style.fontStyle === 'italic') wrap('em')
+  if (tag === 'u' || node.style.textDecoration.includes('underline')) wrap('u')
+  if (tag === 'blockquote') wrap('blockquote')
+  if (tag === 'p' || tag === 'div') wrap('div')
+  return result
+}
 function startHistorySwipe(event) {
   if (event.pointerType !== 'touch') return
   historySwipe.value = { x: event.clientX, y: event.clientY }

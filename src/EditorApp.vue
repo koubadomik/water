@@ -12,6 +12,7 @@
           <button :class="{ active: settingsPanel === 'writing' }" @click="settingsPanel = settingsPanel === 'writing' ? null : 'writing'">Writing</button>
           <button :class="{ active: settingsPanel === 'keyboard' }" @click="settingsPanel = settingsPanel === 'keyboard' ? null : 'keyboard'">Keyboard</button>
           <button :class="{ active: settingsPanel === 'theme' }" @click="settingsPanel = settingsPanel === 'theme' ? null : 'theme'">Theme</button>
+          <button :class="{ active: settingsPanel === 'backup' }" @click="settingsPanel = settingsPanel === 'backup' ? null : 'backup'">Backup</button>
         </div>
         <section v-if="settingsPanel === 'writing'" class="tool-settings">
           <label>Text size<select v-model="textSize" @change="savePrefs"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
@@ -25,6 +26,11 @@
           <label>Skin<select v-model="skin" @change="applyAppearance(skin)"><option v-for="item in skins" :key="item.id" :value="item.id">{{ item.name }}</option></select></label>
           <label>Font<select v-model="font" @change="applyFont(font)"><option v-for="item in fonts" :key="item.id" :value="item.id">{{ item.name }}</option></select></label>
         </section>
+        <section v-if="settingsPanel === 'backup'" class="tool-settings backup-settings">
+          <button class="tool-button" @click="copyBackup">Copy to clipboard</button>
+          <button class="tool-button" @click="restoreBackup">Restore from clipboard</button>
+          <p v-if="copied" class="backup-status">{{ copied }}</p>
+        </section>
       </div>
     </header>
     <div v-if="selectionOpen" class="selection-tools" :style="selectionStyle">
@@ -36,7 +42,7 @@
       <button v-for="color in colors" :key="color" class="color-button" :style="{ background: color }" @mousedown.prevent="command('foreColor', color)" />
       <input v-model="customColor" class="color-picker" type="color" @input="command('foreColor', customColor)" />
     </div>
-    <p v-if="copied" class="copied">Copied</p>
+    <p v-if="copied" class="copied">{{ copied }}</p>
     <div v-if="emojiSuggestion" ref="emojiMenu" class="emoji-suggestion" :style="emojiSuggestionStyle">
       <button v-for="(item, index) in emojiSuggestion" :key="item.name" :class="{ selected: index === emojiIndex }" @mousedown.prevent="insertEmoji(item)"><span>{{ item.emoji }}</span><small>:{{ item.name }}:</small></button>
     </div>
@@ -45,7 +51,7 @@
     <canvas ref="sketchLayer" class="sketch-layer" :class="{ interactive: drawMode }" @pointerdown="beginStroke($event); startInkHistorySwipe($event)" @pointermove="continueStroke" @pointerup="endStroke($event); finishInkHistorySwipe($event)" @pointercancel="endStroke" @lostpointercapture="endStroke" @touchstart.prevent @touchmove.prevent @selectstart.prevent @dragstart.prevent @contextmenu.prevent />
     <aside v-if="drawMode" class="ink-dock" aria-label="Drawing controls">
       <div class="ink-colors"><button v-for="color in inkColors" :key="color" class="ink-color" :class="{ selected: inkColor === color }" :style="{ '--ink-color': color }" :aria-label="`Use ${color} ink`" @click="inkColor = color" /><label class="custom-ink" title="Custom ink color"><input v-model="inkColor" type="color" aria-label="Custom ink color" /></label></div>
-      <div class="ink-types"><button v-for="item in inkStyles" :key="item.id" :class="{ selected: inkStyle === item.id }" @click="inkStyle = item.id"><span>{{ item.icon }}</span>{{ item.name }}</button></div>
+      <div class="ink-types"><button v-for="item in inkStyles" :key="item.id" :class="{ selected: inkStyle === item.id }" @click="inkStyle = item.id"><span>{{ item.icon }}</span>{{ item.name }}</button><button class="clear-ink" @click="clearStrokes">Clear all</button></div>
       <label class="ink-size"><span>Fine</span><input v-model.number="penSize" type="range" min="2" max="18" step="1" aria-label="Stroke size" /><span>Bold</span></label>
     </aside>
   </main>
@@ -70,7 +76,7 @@ const editor = ref(null)
 const shell = ref(null)
 const sketchLayer = ref(null)
 const { applyAppearance, applyFont, fonts, selectedFont: font, selectedSkin: skin, skins } = useAppearance(props.appearanceNamespace)
-const copied = ref(false)
+const copied = ref('')
 const colors = ['#b64c4c', '#c08a28', '#4c8a69', '#477cac']
 const customColor = ref('#72558c')
 const toolsOpen = ref(false)
@@ -89,7 +95,7 @@ const inkColor = ref('#364f82')
 const penSize = ref(5)
 const inkStyle = ref('pen')
 const inkColors = ['#1e2634', '#364f82', '#a23e48', '#417b5a', '#c28b27', '#7653a6']
-const inkStyles = [{ id: 'pen', name: 'Pen', icon: '✒' }, { id: 'highlighter', name: 'Glow', icon: '━' }]
+const inkStyles = [{ id: 'pen', name: 'Pen', icon: '✒' }, { id: 'highlighter', name: 'Glow', icon: '━' }, { id: 'eraser', name: 'Eraser', icon: '⌫' }]
 const strokes = ref(readStrokes())
 const undoneStrokes = ref([])
 const activeStroke = ref(null)
@@ -347,7 +353,60 @@ function markdown(node) {
   }
   return content
 }
-async function copy() { await navigator.clipboard.writeText(markdown(editor.value).trim()); copied.value = true; setTimeout(() => { copied.value = false }, 1200) }
+function showCopied(message) { copied.value = message; setTimeout(() => { copied.value = '' }, 2600) }
+async function writeClipboard(text) {
+  try {
+    if (navigator.clipboard?.writeText && window.isSecureContext) return await navigator.clipboard.writeText(text)
+  } catch { /* use iOS-compatible fallback */ }
+  const area = document.createElement('textarea')
+  area.value = text
+  area.setAttribute('readonly', '')
+  area.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0'
+  document.body.append(area)
+  area.focus()
+  area.select()
+  area.setSelectionRange(0, area.value.length)
+  const copied = document.execCommand('copy')
+  area.remove()
+  if (!copied) throw new Error('Copy failed')
+}
+async function copy() {
+  try { await writeClipboard(markdown(editor.value).trim()); showCopied('Copied') } catch { showCopied('Copy unavailable') }
+}
+function makeBackup() {
+  return JSON.stringify({ format: 'water-editor-backup', version: 2, createdAt: new Date().toISOString(), html: editor.value.innerHTML, strokes: strokes.value, canvas: { width: sketchSize.value.width, height: sketchSize.value.height } })
+}
+async function copyBackup() {
+  try {
+    await writeClipboard(makeBackup())
+    showCopied('Backup copied — text + ink')
+  } catch { showCopied('Copy unavailable') }
+}
+async function restoreBackup() {
+  try {
+    if (!navigator.clipboard?.readText) throw new Error('Clipboard unavailable')
+    let raw
+    try { raw = await navigator.clipboard.readText() } catch { throw new Error('Clipboard denied') }
+    const backup = JSON.parse(raw)
+    if (backup.format !== 'water-editor-backup' || typeof backup.html !== 'string' || !Array.isArray(backup.strokes)) throw new Error('Invalid backup')
+    if (!confirm('Replace this note and its drawing with the backup?')) return
+    editor.value.innerHTML = backup.html
+    await nextTick()
+    updateSketchSize()
+    const sourceWidth = Number(backup.canvas?.width)
+    const sourceHeight = Number(backup.canvas?.height)
+    const widthScale = sourceWidth > 0 ? sketchSize.value.width / sourceWidth : 1
+    const heightScale = sourceHeight > 0 ? sketchSize.value.height / sourceHeight : 1
+    strokes.value = backup.strokes.map((stroke) => ({ ...stroke, points: stroke.points.map(([x, y, pressure]) => [x * widthScale, y * heightScale, pressure]) }))
+    undoneStrokes.value = []
+    save()
+    saveStrokes()
+    renderInk()
+    showCopied('Backup restored')
+  } catch (error) {
+    showCopied(['Clipboard unavailable', 'Clipboard denied'].includes(error?.message) ? 'Clipboard reading needs HTTPS' : 'That is not an editor backup')
+  }
+}
 function clear() { if (confirm('Clear this note?')) { editor.value.innerHTML = ''; save() } }
 function readStrokes() {
   try {
@@ -376,7 +435,9 @@ function renderInk() {
   context.clearRect(0, 0, width, height)
   ;[...strokes.value, activeStroke.value].filter(Boolean).forEach((stroke) => {
     const style = stroke.style || 'pen'
-    const options = style === 'pencil'
+    const options = style === 'eraser'
+      ? { size: stroke.size * 4.5, thinning: 0, smoothing: .7, streamline: .45 }
+      : style === 'pencil'
       ? { size: stroke.size, thinning: .35, smoothing: .35, streamline: .42 }
       : style === 'marker'
         ? { size: stroke.size * 1.45, thinning: .12, smoothing: .65, streamline: .45 }
@@ -388,10 +449,12 @@ function renderInk() {
     context.beginPath()
     outline.forEach(([x, y], index) => index ? context.lineTo(x, y) : context.moveTo(x, y))
     context.closePath()
+    context.globalCompositeOperation = style === 'eraser' ? 'destination-out' : 'source-over'
     context.globalAlpha = style === 'pencil' ? .72 : style === 'highlighter' ? .27 : style === 'marker' ? .82 : 1
     context.fillStyle = stroke.color
     context.fill()
     context.globalAlpha = 1
+    context.globalCompositeOperation = 'source-over'
   })
 }
 function pointFromEvent(event) {
@@ -498,5 +561,8 @@ function playTypingSound(event) {
 .emoji-suggestion { position:fixed; z-index:9; display:grid; grid-template-columns:1fr; gap:4px; max-height:196px; overflow:auto; padding:7px; border:1px solid var(--border); border-radius:14px; background:color-mix(in srgb,var(--card) 96%,transparent); box-shadow:var(--shadow-lg); backdrop-filter:blur(14px); }.emoji-suggestion button { display:flex; align-items:center; gap:6px; min-height:30px; overflow:hidden; border:0; border-radius:8px; background:transparent; color:var(--foreground); font:inherit; text-align:left; }.emoji-suggestion button.selected,.emoji-suggestion button:active { background:color-mix(in srgb,var(--primary) 15%,transparent); }.emoji-suggestion span { font-size:18px; }.emoji-suggestion small { overflow:hidden; color:var(--muted-foreground); font:11px var(--font-mono); text-overflow:ellipsis; white-space:nowrap; }
 .draw-control { display:flex; align-items:center; gap:5px; min-height:32px; color:var(--muted-foreground); font-size:11px; }.draw-control input[type='color'] { width:27px; height:27px; padding:0; border:1px solid var(--border); border-radius:50%; background:transparent; }.draw-control input[type='range'] { width:74px; accent-color:var(--primary); }.sketch-layer { position:absolute; z-index:4; inset:0; width:100%; height:100%; pointer-events:none; -webkit-user-select:none; -webkit-touch-callout:none; }.sketch-layer.interactive { pointer-events:auto; cursor:crosshair; touch-action:none; }.drawing-active .page { user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
 .ink-dock { position:fixed; z-index:9; bottom:max(14px,env(safe-area-inset-bottom)); left:50%; display:grid; gap:8px; width:min(430px,calc(100vw - 24px)); padding:10px 12px; transform:translateX(-50%); border:1px solid var(--border); border-radius:22px; background:color-mix(in srgb,var(--card) 94%,transparent); box-shadow:var(--shadow-lg); backdrop-filter:blur(18px); }.ink-colors,.ink-types,.ink-size { display:flex; align-items:center; justify-content:center; gap:8px; }.ink-color { width:26px; height:26px; border:2px solid var(--card); border-radius:50%; background:var(--ink-color); box-shadow:0 0 0 1px var(--border); }.ink-color.selected { transform:scale(1.2); box-shadow:0 0 0 2px var(--primary); }.ink-types button { display:flex; align-items:center; gap:4px; min-height:31px; padding:0 7px; border:1px solid transparent; border-radius:9px; background:transparent; color:var(--muted-foreground); font:12px var(--font-reading); }.ink-types button span { font-size:15px; }.ink-types button.selected { border-color:var(--border); background:var(--background); color:var(--foreground); box-shadow:var(--shadow-sm); }.ink-size { color:var(--muted-foreground); font-size:10px; }.ink-size input { width:min(230px,55vw); accent-color:var(--primary); }
+.ink-types .clear-ink { margin-left:4px; color:var(--destructive); }
 .tool-quick-actions,.tool-sections { display:flex; justify-content:center; gap:7px; width:100%; }.tool-sections { padding-top:7px; border-top:1px solid var(--border); }.tool-sections button { min-height:28px; padding:0 8px; border:0; border-radius:8px; background:transparent; color:var(--muted-foreground); font:12px var(--font-reading); }.tool-sections button.active { background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--foreground); }.tool-settings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; width:100%; }.tool-settings label { display:grid; gap:4px; color:var(--muted-foreground); font-size:11px; }.tool-settings select,.tool-settings input { min-width:0; width:100%; min-height:30px; border:1px solid var(--border); border-radius:7px; background:var(--background); color:var(--foreground); font:inherit; }.tool-settings select { padding:0 5px; }.tool-settings input { accent-color:var(--primary); }.custom-ink { display:grid; width:26px; height:26px; overflow:hidden; border:1px dashed var(--border); border-radius:50%; background:conic-gradient(#e15454,#e4c84a,#4ba277,#4e78bd,#a559b1,#e15454); }.custom-ink input { width:36px; height:36px; margin:-5px; opacity:0; cursor:pointer; }
+.backup-settings .tool-button { min-height:36px; }
+.backup-status { grid-column:1 / -1; margin:0; color:var(--muted-foreground); font-size:11px; text-align:center; }
 </style>

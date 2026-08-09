@@ -218,7 +218,7 @@ describe('parseStudySet on the "Odpoved>" paste', () => {
 })
 
 describe('parseStudySet accepts every heading form', () => {
-  const forms = ['Odpověď:', 'Odpověď :', 'Odpověď>', 'Odpověď >', 'Odpověď', 'odpoved:', 'Answer:']
+  const forms = ['Odpověď:', 'Odpověď :', 'Odpověď>', 'Odpověď >', 'Odpověď', 'odpoved:', 'Answer:', 'O>']
 
   test.each(forms)('%s on its own line', (heading) => {
     const set = parseStudySet(`1. Q ①?\n\n${heading}\n\n① Alpha\n\n② Beta`)

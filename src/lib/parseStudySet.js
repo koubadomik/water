@@ -20,12 +20,12 @@ const MARKER_LINE = new RegExp(`^\\s*([${MARKER_CLASS}])\\s*(.*)$`)
 const BLANK = new RegExp(`\\(\\s*([${MARKER_CLASS}])\\s*([^)]*?)\\s*\\)`, 'g')
 const VERSE_LINE = /^\s*:(\d+)\s*(.*)$/
 const QUESTION_LINE = /^\s*(\d+)\s*[.)]\s*(.+)$/
-// "Odpoved:", "Odpoved >", "Odpoved>", or the word alone — and the first answer
+// "Odpoved:", "Odpoved >", "Odpoved>", the concise "O>", or the word alone — and the first answer
 // often rides on the same line, so this matches a prefix. The delimiter is
 // required unless the word ends the line, otherwise a question opening with
 // "Answer the following" would read as a heading.
 const ANSWER_HEADING = new RegExp(
-  `^\\s*(?:odpověď|odpoved|answer)\\s*(?:[:>]+\\s*|$|(?=[${MARKER_CLASS}]))`,
+  `^\\s*(?:(?:odpověď|odpoved|answer)\\s*(?:[:>]+\\s*|$|(?=[${MARKER_CLASS}]))|o>\\s*)`,
   'i',
 )
 

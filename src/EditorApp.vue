@@ -12,6 +12,7 @@
           <button :class="{ active: settingsPanel === 'writing' }" @click="settingsPanel = settingsPanel === 'writing' ? null : 'writing'">Writing</button>
           <button :class="{ active: settingsPanel === 'keyboard' }" @click="settingsPanel = settingsPanel === 'keyboard' ? null : 'keyboard'">Keyboard</button>
           <button :class="{ active: settingsPanel === 'theme' }" @click="settingsPanel = settingsPanel === 'theme' ? null : 'theme'">Theme</button>
+          <button :class="{ active: settingsPanel === 'export' }" @click="settingsPanel = settingsPanel === 'export' ? null : 'export'">Export</button>
           <button :class="{ active: settingsPanel === 'backup' }" @click="settingsPanel = settingsPanel === 'backup' ? null : 'backup'">Backup</button>
         </div>
         <section v-if="settingsPanel === 'writing'" class="tool-settings">
@@ -25,6 +26,11 @@
         <section v-if="settingsPanel === 'theme'" class="tool-settings">
           <label>Skin<select v-model="skin" @change="applyAppearance(skin)"><option v-for="item in skins" :key="item.id" :value="item.id">{{ item.name }}</option></select></label>
           <label>Font<select v-model="font" @change="applyFont(font)"><option v-for="item in fonts" :key="item.id" :value="item.id">{{ item.name }}</option></select></label>
+        </section>
+        <section v-if="settingsPanel === 'export'" class="tool-settings export-settings">
+          <button class="tool-button" :disabled="exporting" @click="exportPng">{{ exporting ? 'Making image…' : 'Copy page as PNG' }}</button>
+          <button class="tool-button" @click="exportPdf">Print / Save PDF</button>
+          <p>PNG includes text, colours and ink. If your browser blocks image clipboard access, it downloads the PNG instead.</p>
         </section>
         <section v-if="settingsPanel === 'backup'" class="tool-settings backup-settings">
           <button class="tool-button" @click="copyBackup">Copy to clipboard</button>
@@ -47,8 +53,10 @@
       <button v-for="(item, index) in emojiSuggestion" :key="item.name" :class="{ selected: index === emojiIndex }" @mousedown.prevent="insertEmoji(item)"><span>{{ item.emoji }}</span><small>:{{ item.name }}:</small></button>
     </div>
     <button v-if="verseSuggestion" class="verse-suggestion" :style="verseSuggestionStyle" @mousedown.prevent="insertVerse">Insert {{ verseSuggestion.ref }}: {{ verseSuggestion.text }}</button>
-    <article ref="editor" class="page" :class="[`size-${textSize}`, `width-${pageWidth}`]" :contenteditable="!drawMode" spellcheck="true" :data-placeholder="placeholder" @input="onInput" @keydown="handleEmojiKeys" @paste="pasteClean" @mouseup="checkSelection" @keyup="checkSelection" @pointerdown="startHistorySwipe" @pointerup="finishHistorySwipe" @pointercancel="historySwipe = null" />
-    <canvas ref="sketchLayer" class="sketch-layer" :class="{ interactive: drawMode }" @pointerdown="beginStroke($event); startInkHistorySwipe($event)" @pointermove="continueStroke" @pointerup="endStroke($event); finishInkHistorySwipe($event)" @pointercancel="endStroke" @lostpointercapture="endStroke" @touchstart.prevent @touchmove.prevent @selectstart.prevent @dragstart.prevent @contextmenu.prevent />
+    <div ref="exportArea" class="export-area">
+      <article ref="editor" class="page" :class="[`size-${textSize}`, `width-${pageWidth}`]" :contenteditable="!drawMode" spellcheck="true" :data-placeholder="placeholder" @input="onInput" @keydown="handleEmojiKeys" @paste="pasteClean" @mouseup="checkSelection" @keyup="checkSelection" @pointerdown="startHistorySwipe" @pointerup="finishHistorySwipe" @pointercancel="historySwipe = null" />
+      <canvas ref="sketchLayer" class="sketch-layer" :class="{ interactive: drawMode }" @pointerdown="beginStroke($event); startInkHistorySwipe($event)" @pointermove="continueStroke" @pointerup="endStroke($event); finishInkHistorySwipe($event)" @pointercancel="endStroke" @lostpointercapture="endStroke" @touchstart.prevent @touchmove.prevent @selectstart.prevent @dragstart.prevent @contextmenu.prevent />
+    </div>
     <aside v-if="drawMode" class="ink-dock" aria-label="Drawing controls">
       <div class="ink-colors"><button v-for="color in inkColors" :key="color" class="ink-color" :class="{ selected: inkColor === color }" :style="{ '--ink-color': color }" :aria-label="`Use ${color} ink`" @click="inkColor = color" /><label class="custom-ink" title="Custom ink color"><input v-model="inkColor" type="color" aria-label="Custom ink color" /></label></div>
       <div class="ink-types"><button v-for="item in inkStyles" :key="item.id" :class="{ selected: inkStyle === item.id }" @click="inkStyle = item.id"><span>{{ item.icon }}</span>{{ item.name }}</button><button class="clear-ink" @click="clearStrokes">Clear all</button></div>
@@ -60,6 +68,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { getStroke } from 'perfect-freehand'
+import { toBlob } from 'html-to-image'
 import { useAppearance } from './composables/useAppearance.js'
 import { useBible } from './composables/useBible.js'
 import { resolveReference } from './lib/reference.js'
@@ -74,9 +83,11 @@ const props = defineProps({
 const emit = defineEmits(['saved'])
 const editor = ref(null)
 const shell = ref(null)
+const exportArea = ref(null)
 const sketchLayer = ref(null)
 const { applyAppearance, applyFont, fonts, selectedFont: font, selectedSkin: skin, skins } = useAppearance(props.appearanceNamespace)
 const copied = ref('')
+const exporting = ref(false)
 const colors = ['#b64c4c', '#c08a28', '#4c8a69', '#477cac']
 const customColor = ref('#72558c')
 const toolsOpen = ref(false)
@@ -126,7 +137,7 @@ onMounted(async () => {
   window.addEventListener('resize', updateSketchSize)
   if (typeof ResizeObserver !== 'undefined') {
     sketchObserver = new ResizeObserver(updateSketchSize)
-    sketchObserver.observe(shell.value)
+    sketchObserver.observe(exportArea.value)
   }
 })
 onBeforeUnmount(() => { window.removeEventListener('resize', updateSketchSize); sketchObserver?.disconnect() })
@@ -408,6 +419,48 @@ async function restoreBackup() {
   }
 }
 function clear() { if (confirm('Clear this note?')) { editor.value.innerHTML = ''; save() } }
+async function exportPng() {
+  if (!exportArea.value || exporting.value) return
+  exporting.value = true
+  toolsOpen.value = false
+  settingsPanel.value = null
+  selectionOpen.value = false
+  try {
+    await nextTick()
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+    const blob = await toBlob(exportArea.value, {
+      cacheBust: true,
+      pixelRatio: Math.min(2, window.devicePixelRatio || 1),
+      backgroundColor: getComputedStyle(shell.value).backgroundColor,
+    })
+    if (!blob) throw new Error('Image failed')
+    if (navigator.clipboard?.write && window.ClipboardItem && window.isSecureContext) {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      showCopied('Page image copied')
+    } else {
+      download(blob, 'water-note.png')
+      showCopied('PNG downloaded')
+    }
+  } catch {
+    showCopied('Could not make image')
+  } finally {
+    exporting.value = false
+  }
+}
+function exportPdf() {
+  toolsOpen.value = false
+  settingsPanel.value = null
+  selectionOpen.value = false
+  nextTick(() => window.print())
+}
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 function readStrokes() {
   try {
     const saved = JSON.parse(localStorage.getItem(`${props.storageKey}Sketches`) || '[]')
@@ -417,7 +470,7 @@ function readStrokes() {
 function saveStrokes() { localStorage.setItem(`${props.storageKey}Sketches`, JSON.stringify(strokes.value)) }
 function updateSketchSize() {
   if (!shell.value) return
-  sketchSize.value = { width: Math.max(1, shell.value.scrollWidth, window.innerWidth), height: Math.max(window.innerHeight, shell.value.scrollHeight) }
+  sketchSize.value = { width: Math.max(1, exportArea.value?.scrollWidth || shell.value.scrollWidth, window.innerWidth), height: Math.max(window.innerHeight, exportArea.value?.scrollHeight || shell.value.scrollHeight) }
   nextTick(renderInk)
 }
 function renderInk() {
@@ -559,10 +612,12 @@ function playTypingSound(event) {
 <style scoped>
 .editor-shell { position:relative; min-height:100dvh; background:var(--background); color:var(--foreground); }.editor-tools { position:fixed; z-index:8; top:max(8px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); }.tools-menu { position:absolute; top:calc(100% + 8px); left:50%; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; width:min(360px,calc(100vw - 24px)); padding:10px; transform:translateX(-50%); border:1px solid var(--border); border-radius:var(--radius-lg); background:color-mix(in srgb,var(--card) 94%,transparent); box-shadow:var(--shadow-lg); backdrop-filter:blur(16px); }.tool-select,.tool-button,.format-button { min-height:32px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--card); color:var(--foreground); font:inherit; font-size:12px; cursor:pointer; }.tool-select { max-width:104px; padding:0 6px; }.sound-select { max-width:150px; }.sound-volume { display:grid; width:132px; gap:2px; color:var(--muted-foreground); font-size:11px; }.sound-volume input { width:100%; accent-color:var(--primary); }.tool-button,.format-button { padding:0 9px; }.menu { border-radius:var(--radius-full); font-weight:700; }.bold { font-family:Georgia,serif; font-size:17px; font-weight:800; }.italic { font-family:Georgia,serif; font-size:16px; font-style:italic; }.underline { text-decoration:underline; }.quote { font-family:Georgia,serif; font-size:19px; line-height:1; }.selection-tools { position:fixed; z-index:6; display:flex; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--card); box-shadow:var(--shadow-lg); }.color-button,.color-picker { width:22px; height:22px; padding:0; border:2px solid var(--card); border-radius:50%; box-shadow:0 0 0 1px var(--border); cursor:pointer; }.verse-suggestion { position:fixed; z-index:7; box-sizing:border-box; max-width:calc(100vw - 24px); max-height:76px; overflow:hidden; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--card); color:var(--foreground); box-shadow:var(--shadow-lg); padding:10px 12px; font-family:var(--font-reading); font-size:13px; text-align:left; text-overflow:ellipsis; white-space:nowrap; }.danger { color:var(--destructive); }.page { min-height:100dvh; margin:0 auto; padding:54px max(24px,7vw) 120px; outline:0; font-family:var(--font-reading); line-height:1.8; touch-action:pan-y; white-space:pre-wrap; }.page :deep(blockquote) { margin:1.2em 0; padding:.25em 1em; border-left:3px solid var(--primary); color:var(--muted-foreground); font-style:italic; }.width-narrow { max-width:560px; }.width-reading { max-width:760px; }.width-wide { max-width:1100px; }.size-small { font-size:clamp(17px,4.2vw,21px); }.size-medium { font-size:clamp(19px,4.8vw,25px); }.size-large { font-size:clamp(22px,5.5vw,30px); }.page:empty::before { content:attr(data-placeholder); color:var(--muted-foreground); pointer-events:none; }.copied { position:fixed; top:58px; left:50%; z-index:4; transform:translateX(-50%); padding:6px 10px; border-radius:var(--radius-full); background:var(--primary); color:var(--primary-foreground); font-size:12px; }
 .emoji-suggestion { position:fixed; z-index:9; display:grid; grid-template-columns:1fr; gap:4px; max-height:196px; overflow:auto; padding:7px; border:1px solid var(--border); border-radius:14px; background:color-mix(in srgb,var(--card) 96%,transparent); box-shadow:var(--shadow-lg); backdrop-filter:blur(14px); }.emoji-suggestion button { display:flex; align-items:center; gap:6px; min-height:30px; overflow:hidden; border:0; border-radius:8px; background:transparent; color:var(--foreground); font:inherit; text-align:left; }.emoji-suggestion button.selected,.emoji-suggestion button:active { background:color-mix(in srgb,var(--primary) 15%,transparent); }.emoji-suggestion span { font-size:18px; }.emoji-suggestion small { overflow:hidden; color:var(--muted-foreground); font:11px var(--font-mono); text-overflow:ellipsis; white-space:nowrap; }
-.draw-control { display:flex; align-items:center; gap:5px; min-height:32px; color:var(--muted-foreground); font-size:11px; }.draw-control input[type='color'] { width:27px; height:27px; padding:0; border:1px solid var(--border); border-radius:50%; background:transparent; }.draw-control input[type='range'] { width:74px; accent-color:var(--primary); }.sketch-layer { position:absolute; z-index:4; inset:0; width:100%; height:100%; pointer-events:none; -webkit-user-select:none; -webkit-touch-callout:none; }.sketch-layer.interactive { pointer-events:auto; cursor:crosshair; touch-action:none; }.drawing-active .page { user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.draw-control { display:flex; align-items:center; gap:5px; min-height:32px; color:var(--muted-foreground); font-size:11px; }.draw-control input[type='color'] { width:27px; height:27px; padding:0; border:1px solid var(--border); border-radius:50%; background:transparent; }.draw-control input[type='range'] { width:74px; accent-color:var(--primary); }.export-area { position:relative; min-height:100dvh; }.sketch-layer { position:absolute; z-index:4; inset:0; width:100%; height:100%; pointer-events:none; -webkit-user-select:none; -webkit-touch-callout:none; }.sketch-layer.interactive { pointer-events:auto; cursor:crosshair; touch-action:none; }.drawing-active .page { user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
 .ink-dock { position:fixed; z-index:9; bottom:max(14px,env(safe-area-inset-bottom)); left:50%; display:grid; gap:8px; width:min(430px,calc(100vw - 24px)); padding:10px 12px; transform:translateX(-50%); border:1px solid var(--border); border-radius:22px; background:color-mix(in srgb,var(--card) 94%,transparent); box-shadow:var(--shadow-lg); backdrop-filter:blur(18px); }.ink-colors,.ink-types,.ink-size { display:flex; align-items:center; justify-content:center; gap:8px; }.ink-color { width:26px; height:26px; border:2px solid var(--card); border-radius:50%; background:var(--ink-color); box-shadow:0 0 0 1px var(--border); }.ink-color.selected { transform:scale(1.2); box-shadow:0 0 0 2px var(--primary); }.ink-types button { display:flex; align-items:center; gap:4px; min-height:31px; padding:0 7px; border:1px solid transparent; border-radius:9px; background:transparent; color:var(--muted-foreground); font:12px var(--font-reading); }.ink-types button span { font-size:15px; }.ink-types button.selected { border-color:var(--border); background:var(--background); color:var(--foreground); box-shadow:var(--shadow-sm); }.ink-size { color:var(--muted-foreground); font-size:10px; }.ink-size input { width:min(230px,55vw); accent-color:var(--primary); }
 .ink-types .clear-ink { margin-left:4px; color:var(--destructive); }
 .tool-quick-actions,.tool-sections { display:flex; justify-content:center; gap:7px; width:100%; }.tool-sections { padding-top:7px; border-top:1px solid var(--border); }.tool-sections button { min-height:28px; padding:0 8px; border:0; border-radius:8px; background:transparent; color:var(--muted-foreground); font:12px var(--font-reading); }.tool-sections button.active { background:color-mix(in srgb,var(--primary) 14%,transparent); color:var(--foreground); }.tool-settings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; width:100%; }.tool-settings label { display:grid; gap:4px; color:var(--muted-foreground); font-size:11px; }.tool-settings select,.tool-settings input { min-width:0; width:100%; min-height:30px; border:1px solid var(--border); border-radius:7px; background:var(--background); color:var(--foreground); font:inherit; }.tool-settings select { padding:0 5px; }.tool-settings input { accent-color:var(--primary); }.custom-ink { display:grid; width:26px; height:26px; overflow:hidden; border:1px dashed var(--border); border-radius:50%; background:conic-gradient(#e15454,#e4c84a,#4ba277,#4e78bd,#a559b1,#e15454); }.custom-ink input { width:36px; height:36px; margin:-5px; opacity:0; cursor:pointer; }
 .backup-settings .tool-button { min-height:36px; }
 .backup-status { grid-column:1 / -1; margin:0; color:var(--muted-foreground); font-size:11px; text-align:center; }
+.export-settings { grid-template-columns:repeat(2,minmax(0,1fr)); }.export-settings .tool-button { min-height:36px; }.export-settings p { grid-column:1 / -1; margin:0; color:var(--muted-foreground); font-size:11px; line-height:1.35; text-align:center; }
+@media print { .editor-tools,.selection-tools,.copied,.emoji-suggestion,.verse-suggestion,.ink-dock { display:none !important; }.editor-shell,.export-area { min-height:0; background:var(--background) !important; }.page { min-height:0; padding:24px; }.sketch-layer { z-index:1; } }
 </style>

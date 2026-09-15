@@ -16,7 +16,7 @@
         class="lb-textarea"
         data-testid="paste-box"
         rows="14"
-        placeholder="1. Ve „svatyni stánku svědectví“ ve Zjevení 15:5, ① kdo svědčí…?&#10;&#10;Odpověď:&#10;&#10;① Ti, kteří zvítězili&#10;&#10;Zj 15:1-8&#10;&#10;:1 Tu jsem uviděl v nebi ( ① jiné veliké a podivuhodné znamení )…"
+        placeholder="1. Question with ① and ② markers…&#10;&#10;Answer:&#10;&#10;① First answer&#10;&#10;Sample 1:1&#10;&#10;:1 A line with ( ① a blank )…"
       />
 
       <div v-if="draft.trim()" class="lb-preview" data-testid="paste-preview">

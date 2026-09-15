@@ -3,7 +3,7 @@ import { normalizeAnswer, answersMatch, levenshtein, tolerance } from '../matchA
 
 describe('normalizeAnswer', () => {
   test('lowercases and collapses whitespace', () => {
-    expect(normalizeAnswer('  Posledních   RAN ')).toBe('posledních ran')
+    expect(normalizeAnswer('  Hidden   PHRASE ')).toBe('hidden phrase')
   })
 
   test('drops punctuation and Czech quote marks', () => {
@@ -37,17 +37,17 @@ describe('levenshtein', () => {
 
 describe('answersMatch', () => {
   test('accepts an exact answer', () => {
-    expect(answersMatch('posledních ran', 'posledních ran')).toBe(true)
+    expect(answersMatch('hidden phrase', 'hidden phrase')).toBe(true)
   })
 
   test('accepts differing case and punctuation', () => {
-    expect(answersMatch('Posledních ran.', 'posledních ran')).toBe(true)
+    expect(answersMatch('Hidden phrase.', 'hidden phrase')).toBe(true)
   })
 
   test('accepts dead-key typed Czech against pasted scripture', () => {
     const expected = 'jiné veliké a podivuhodné znamení'
     expect(answersMatch(expected.normalize('NFD'), expected.normalize('NFC'))).toBe(true)
-    expect(answersMatch('posledních ran'.normalize('NFD'), 'posledních ran')).toBe(true)
+    expect(answersMatch('hidden phrase'.normalize('NFD'), 'hidden phrase')).toBe(true)
   })
 
   test('forgives one typo in a long phrase', () => {
@@ -55,14 +55,14 @@ describe('answersMatch', () => {
   })
 
   test('rejects a missing diacritic in a short phrase', () => {
-    // "posledních ran" is 14 chars → tolerance 1, so this stays a near-miss
+    // "hidden phrase" is long enough that this stays a near-miss.
     // but a wholly different word must fail.
-    expect(answersMatch('poslední den', 'posledních ran')).toBe(false)
+    expect(answersMatch('hidden word', 'hidden phrase')).toBe(false)
   })
 
   test('rejects an empty answer', () => {
-    expect(answersMatch('', 'posledních ran')).toBe(false)
-    expect(answersMatch('   ', 'posledních ran')).toBe(false)
+    expect(answersMatch('', 'hidden phrase')).toBe(false)
+    expect(answersMatch('   ', 'hidden phrase')).toBe(false)
   })
 
   test('rejects a wrong answer of similar length', () => {

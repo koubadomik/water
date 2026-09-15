@@ -10,9 +10,9 @@ Odpověď:
 
 ① Alpha
 
-Zj 15:1-8
+Sample 1:1
 
-:1 sedm ( ① posledních ran ) konec.`
+:1 a line with ( ① a hidden phrase ) ends.`
 
 beforeEach(() => localStorage.clear())
 

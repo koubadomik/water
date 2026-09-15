@@ -46,21 +46,22 @@
         You added: <s>{{ diff.extra.join(' ') }}</s>
       </p>
 
-      <button class="btn btn-primary vr-next" data-testid="verse-next" @click="emit('done', result)">
-        {{ result === 'got' ? 'Next' : 'Try again' }}
+      <button class="btn btn-primary vr-next" data-testid="verse-next" @click="continueRecall">
+        {{ result === 'got' ? 'Next' : retryInline ? 'Edit and try again' : 'Try again' }}
       </button>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { diffWords } from '../../lib/diffWords.js'
 import { answersMatch } from '../../lib/matchAnswer.js'
 
 const props = defineProps({
   verse: { type: Object, required: true },
   note: { type: String, default: '' },
+  retryInline: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['done'])
@@ -95,6 +96,16 @@ function submit() {
 function giveUp() {
   gaveUp.value = true
   submitted.value = true
+}
+
+function continueRecall() {
+  if (result.value !== 'got' && props.retryInline) {
+    submitted.value = false
+    gaveUp.value = false
+    nextTick(() => box.value?.focus())
+    return
+  }
+  emit('done', result.value)
 }
 
 onMounted(() => box.value?.focus())

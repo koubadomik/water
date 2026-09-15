@@ -5,8 +5,8 @@ const statuses = (d) => d.words.map((w) => `${w.value}:${w.status}`)
 
 describe('diffWords', () => {
   test('marks every word ok for a perfect answer', () => {
-    const d = diffWords('posledních ran', 'posledních ran')
-    expect(statuses(d)).toEqual(['posledních:ok', 'ran:ok'])
+    const d = diffWords('hidden phrase', 'hidden phrase')
+    expect(statuses(d)).toEqual(['hidden:ok', 'phrase:ok'])
     expect(d.extra).toEqual([])
     expect(d.correct).toBe(2)
   })
@@ -31,7 +31,7 @@ describe('diffWords', () => {
   })
 
   test('ignores case and punctuation when matching words', () => {
-    const d = diffWords('Posledních, RAN.', 'posledních ran')
+    const d = diffWords('Hidden, PHRASE.', 'hidden phrase')
     expect(d.correct).toBe(2)
     expect(d.extra).toEqual([])
   })
@@ -44,8 +44,8 @@ describe('diffWords', () => {
   })
 
   test('an untouched blank is all missing and flagged unattempted', () => {
-    const d = diffWords('', 'posledních ran')
-    expect(statuses(d)).toEqual(['posledních:missing', 'ran:missing'])
+    const d = diffWords('', 'hidden phrase')
+    expect(statuses(d)).toEqual(['hidden:missing', 'phrase:missing'])
     expect(d.attempted).toBe(false)
     expect(d.correct).toBe(0)
   })

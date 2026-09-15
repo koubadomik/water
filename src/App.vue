@@ -8,6 +8,7 @@
         <Transition name="page" mode="out-in">
           <div :key="activeTab" class="page-frame">
             <TodayView   v-if="activeTab === 'home'"    @navigate="activeTab = $event" />
+            <DrillView   v-else-if="activeTab === 'drill'" />
             <PalaceView  v-else-if="activeTab === 'palace'"  />
             <SearchView  v-else-if="activeTab === 'search'"  />
             <TestsView   v-else-if="activeTab === 'new'"     />
@@ -24,6 +25,7 @@ import { ref, watch } from 'vue'
 import AppShell   from './components/AppShell.vue'
 import TopBar     from './components/TopBar.vue'
 import TodayView  from './views/TodayView.vue'
+import DrillView  from './views/DrillView.vue'
 import PalaceView from './views/PalaceView.vue'
 import SearchView from './views/SearchView.vue'
 import TestsView  from './views/TestsView.vue'
@@ -31,7 +33,7 @@ import MoreView   from './views/MoreView.vue'
 import { useQueue } from './composables/useQueue.js'
 import { useZen } from './composables/useZen.js'
 
-const TABS = ['home', 'palace', 'search', 'new', 'more']
+const TABS = ['home', 'drill', 'palace', 'search', 'new', 'more']
 
 // Sections are addressable by hash — /next/#/new opens the study sets.
 function tabFromHash() {

@@ -28,6 +28,21 @@ describe('diffWords', () => {
     const d = diffWords('sedm zlatých mečů', 'sedm zlatých misek')
     expect(d.extra).toEqual(['mečů'])
     expect(statuses(d)).toEqual(['sedm:ok', 'zlatých:ok', 'misek:missing'])
+    expect(d.correction).toEqual([
+      { type: 'word', status: 'ok', value: 'sedm' },
+      { type: 'word', status: 'ok', value: 'zlatých' },
+      { type: 'word', status: 'replaced', value: 'misek', typed: 'mečů' },
+    ])
+  })
+
+  test('keeps an inserted word beside the place it was inserted', () => {
+    const d = diffWords('a very bright signal', 'a bright signal')
+    expect(d.correction).toEqual([
+      { type: 'word', status: 'ok', value: 'a' },
+      { type: 'extra', value: 'very' },
+      { type: 'word', status: 'ok', value: 'bright' },
+      { type: 'word', status: 'ok', value: 'signal' },
+    ])
   })
 
   test('ignores case and punctuation when matching words', () => {

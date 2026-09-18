@@ -4,6 +4,7 @@ import { nextTick } from 'vue'
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 import QuestionTrainer from '../study/QuestionTrainer.vue'
 import ClozeTrainer from '../study/ClozeTrainer.vue'
+import VerseRecall from '../study/VerseRecall.vue'
 import { parseStudySet } from '../../lib/parseStudySet.js'
 
 beforeEach(() => localStorage.clear())
@@ -282,5 +283,26 @@ describe('ClozeTrainer', () => {
     await w.findAll('button').find((b) => b.text() === 'Reset').trigger('click')
     expect(w.text()).toContain('0 / 3')
     expect(w.text()).not.toContain('a final marker')
+  })
+})
+
+describe('VerseRecall correction', () => {
+  test('pairs a wrong word with the word it replaced instead of separating them', async () => {
+    const w = mount(VerseRecall, { props: { verse: { ref: 'Sample 1:1', text: 'A bright signal' }, retryInline: true } })
+    await w.find('[data-testid="verse-input"]').setValue('A quiet signal')
+    await w.find('[data-testid="verse-submit"]').trigger('click')
+
+    expect(w.find('[data-testid="verse-diff"] .replaced').text()).toContain('bright')
+    expect(w.find('[data-testid="verse-diff"] .replaced').text()).toContain('you: quiet')
+    expect(w.text()).toContain('1 swapped')
+  })
+
+  test('shows an inserted word at its original place in the correction', async () => {
+    const w = mount(VerseRecall, { props: { verse: { ref: 'Sample 1:1', text: 'A bright signal' }, retryInline: true } })
+    await w.find('[data-testid="verse-input"]').setValue('A very bright signal')
+    await w.find('[data-testid="verse-submit"]').trigger('click')
+
+    expect(w.findAll('[data-testid="verse-diff"] .extra').some((node) => node.text().includes('very'))).toBe(true)
+    expect(w.text()).toContain('1 added')
   })
 })

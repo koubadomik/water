@@ -36,15 +36,26 @@
     <template v-else>
       <p class="vr-verdict" :class="result" data-testid="verse-verdict">{{ verdictLabel }}</p>
 
-      <p class="prose vr-diff" data-testid="verse-diff">
-        <template v-for="(w, i) in diff.words" :key="i"
-          ><span :class="['vr-w', w.status]">{{ w.value }}</span>{{ ' ' }}</template
-        >
-      </p>
-
-      <p v-if="diff.extra.length" class="vr-extra">
-        You added: <s>{{ diff.extra.join(' ') }}</s>
-      </p>
+      <section class="vr-correction" data-testid="verse-diff" aria-label="Correction">
+        <div v-if="correctionStats.total" class="vr-summary">
+          <span v-if="correctionStats.missing">{{ correctionStats.missing }} missed</span>
+          <span v-if="correctionStats.replaced">{{ correctionStats.replaced }} swapped</span>
+          <span v-if="correctionStats.extra" class="extra">{{ correctionStats.extra }} added</span>
+        </div>
+        <p class="vr-correction-label">Correct verse <span v-if="correctionStats.total">— your changes are marked</span></p>
+        <p class="prose vr-diff">
+          <template v-for="(item, i) in diff.correction" :key="i">
+            <span v-if="item.type === 'extra'" class="vr-token extra"><span aria-hidden="true">+</span> <s>{{ item.value }}</s></span>
+            <span v-else :class="['vr-token', item.status]">
+              {{ item.value }}
+              <small v-if="item.status === 'replaced'">you: <s>{{ item.typed }}</s></small>
+              <small v-else-if="item.status === 'missing'">missed</small>
+            </span>
+            {{ ' ' }}
+          </template>
+        </p>
+        <p v-if="correctionStats.total" class="vr-key"><b>Gold</b> = the word to learn · <b>red</b> = what you added or wrote instead</p>
+      </section>
 
       <button class="btn btn-primary vr-next" data-testid="verse-next" @click="continueRecall">
         {{ result === 'got' ? 'Next' : retryInline ? 'Edit and try again' : 'Try again' }}
@@ -73,6 +84,13 @@ const gaveUp = ref(false)
 const box = ref(null)
 
 const diff = computed(() => diffWords(gaveUp.value ? '' : answer.value, props.verse.text))
+const correctionStats = computed(() => diff.value.correction.reduce((stats, item) => {
+  if (item.type === 'extra') stats.extra++
+  else if (item.status === 'missing') stats.missing++
+  else if (item.status === 'replaced') stats.replaced++
+  stats.total = stats.missing + stats.replaced + stats.extra
+  return stats
+}, { missing: 0, replaced: 0, extra: 0, total: 0 }))
 
 // Graded from the diff rather than by asking — the app can already see how
 // much you recovered. Leaning on the note or giving up costs you a grade.
@@ -182,23 +200,28 @@ onMounted(() => box.value?.focus())
 .vr-verdict.shaky { color: var(--warning); }
 .vr-verdict.lost { color: var(--destructive); }
 
-.vr-diff {
-  margin-bottom: var(--space-4);
+.vr-correction {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
 }
 
-.vr-w.missing {
-  color: var(--warning);
-  text-decoration: underline;
-  text-decoration-style: wavy;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-
-.vr-extra {
-  font-size: var(--text-sm);
-  color: var(--muted-foreground);
-  margin-bottom: var(--space-4);
-}
+.vr-summary { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--space-2); }
+.vr-summary span { padding: 3px 7px; border-radius: var(--radius-full); background: var(--warning-surface); color: var(--warning); font-size: 11px; font-weight: 800; }
+.vr-summary span.extra { background: var(--accent); color: var(--destructive); }
+.vr-correction-label { margin: 0 0 var(--space-2); color: var(--muted-foreground); font-size: 12px; font-weight: 700; }
+.vr-correction-label span { font-weight: 400; }
+.vr-diff { margin: 0; line-height: 2.25; }
+.vr-token { display: inline-block; border-radius: 4px; padding: 0 2px; }
+.vr-token.missing, .vr-token.replaced { background: var(--warning-surface); color: var(--warning); box-shadow: inset 0 -2px 0 var(--warning); }
+.vr-token.extra { color: var(--destructive); background: var(--accent); font-size: .92em; }
+.vr-token small { margin-left: 3px; color: var(--destructive); font-family: var(--font-ui); font-size: .68em; font-weight: 700; white-space: nowrap; }
+.vr-token.missing small { color: var(--warning); }
+.vr-key { margin: var(--space-2) 0 0; color: var(--muted-foreground); font-size: 11px; line-height: 1.35; }
+.vr-key b:first-child { color: var(--warning); }
+.vr-key b:last-child { color: var(--destructive); }
 
 .vr-next {
   width: 100%;

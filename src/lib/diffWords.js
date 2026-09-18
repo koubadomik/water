@@ -62,6 +62,7 @@ export function diffWords(typed, expected) {
       correct: 0,
       total: exp.length,
       attempted: false,
+      correction: exp.map((value) => ({ type: 'word', status: 'missing', value })),
     }
   }
 
@@ -75,5 +76,40 @@ export function diffWords(typed, expected) {
     correct: matchedExp.size,
     total: exp.length,
     attempted: true,
+    correction: buildCorrection(exp, got, pairs),
   }
+}
+
+// A normal word diff tells us which target words were absent and which typed
+// words were surplus, but a memoriser needs to see that "lion" replaced
+// "Lamb". Keep the original simple API above for blank drills, and provide a
+// positional stream for the full-recall correction view.
+function buildCorrection(expected, typed, pairs) {
+  const items = []
+  let expectedCursor = 0
+  let typedCursor = 0
+
+  for (const [matchedExpected, matchedTyped] of [...pairs, [expected.length, typed.length]]) {
+    const expectedGap = expected.slice(expectedCursor, matchedExpected)
+    const typedGap = typed.slice(typedCursor, matchedTyped)
+    const replacementCount = Math.min(expectedGap.length, typedGap.length)
+
+    for (let i = 0; i < replacementCount; i++) {
+      items.push({ type: 'word', status: 'replaced', value: expectedGap[i], typed: typedGap[i] })
+    }
+    for (let i = replacementCount; i < typedGap.length; i++) {
+      items.push({ type: 'extra', value: typedGap[i] })
+    }
+    for (let i = replacementCount; i < expectedGap.length; i++) {
+      items.push({ type: 'word', status: 'missing', value: expectedGap[i] })
+    }
+
+    if (matchedExpected < expected.length) {
+      items.push({ type: 'word', status: 'ok', value: expected[matchedExpected] })
+    }
+    expectedCursor = matchedExpected + 1
+    typedCursor = matchedTyped + 1
+  }
+
+  return items
 }

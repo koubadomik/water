@@ -36,6 +36,11 @@
     <template v-else>
       <p class="vr-verdict" :class="result" data-testid="verse-verdict">{{ verdictLabel }}</p>
 
+      <section v-if="!gaveUp" class="vr-attempt" data-testid="verse-attempt">
+        <p class="vr-attempt-label">Your answer</p>
+        <p class="prose vr-attempt-text">{{ answer }}</p>
+      </section>
+
       <section class="vr-correction" data-testid="verse-diff" aria-label="Correction">
         <div v-if="correctionStats.total" class="vr-summary">
           <span v-if="correctionStats.missing">{{ correctionStats.missing }} missed</span>
@@ -199,6 +204,17 @@ onMounted(() => box.value?.focus())
 .vr-verdict.got { color: var(--success); }
 .vr-verdict.shaky { color: var(--warning); }
 .vr-verdict.lost { color: var(--destructive); }
+
+.vr-attempt {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--muted);
+}
+
+.vr-attempt-label { margin: 0 0 var(--space-2); color: var(--muted-foreground); font-size: 12px; font-weight: 700; }
+.vr-attempt-text { margin: 0; white-space: pre-wrap; }
 
 .vr-correction {
   margin: 0 0 var(--space-4);

@@ -292,6 +292,7 @@ describe('VerseRecall correction', () => {
     await w.find('[data-testid="verse-input"]').setValue('A quiet signal')
     await w.find('[data-testid="verse-submit"]').trigger('click')
 
+    expect(w.find('[data-testid="verse-attempt"]').text()).toContain('A quiet signal')
     expect(w.find('[data-testid="verse-diff"] .replaced').text()).toContain('bright')
     expect(w.find('[data-testid="verse-diff"] .replaced').text()).toContain('you: quiet')
     expect(w.text()).toContain('1 swapped')

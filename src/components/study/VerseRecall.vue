@@ -2,6 +2,17 @@
   <div class="vr">
     <p class="prose-ref">{{ verse.ref }}</p>
 
+    <details class="vr-rules">
+      <summary>Correction rules <span>{{ rulesSummary }}</span></summary>
+      <div class="vr-rules-body">
+        <p>Punctuation</p>
+        <label><input v-model="comparisonRules.punctuation" type="radio" value="ignore" /> Do not check</label>
+        <label><input v-model="comparisonRules.punctuation" type="radio" value="all" /> Check all punctuation</label>
+        <label><input v-model="comparisonRules.punctuation" type="radio" value="sentence-dots" /> Check only sentence dots</label>
+        <label class="vr-case-rule"><input v-model="comparisonRules.caseSensitive" type="checkbox" /> Check upper/lower case</label>
+      </div>
+    </details>
+
     <template v-if="!submitted">
       <p class="vr-prompt">Write it from memory.</p>
 
@@ -73,6 +84,7 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { diffWords } from '../../lib/diffWords.js'
 import { answersMatch } from '../../lib/matchAnswer.js'
+import { useStorage } from '../../composables/useStorage.js'
 
 const props = defineProps({
   verse: { type: Object, required: true },
@@ -87,8 +99,13 @@ const submitted = ref(false)
 const hintShown = ref(false)
 const gaveUp = ref(false)
 const box = ref(null)
+const comparisonRules = useStorage('fullRecallComparisonRules_v1', { punctuation: 'ignore', caseSensitive: false })
 
-const diff = computed(() => diffWords(gaveUp.value ? '' : answer.value, props.verse.text))
+const rulesSummary = computed(() => {
+  const punctuation = { ignore: 'no punctuation', all: 'all punctuation', 'sentence-dots': 'sentence dots' }[comparisonRules.value.punctuation] ?? 'no punctuation'
+  return `${punctuation} · ${comparisonRules.value.caseSensitive ? 'case checked' : 'case ignored'}`
+})
+const diff = computed(() => diffWords(gaveUp.value ? '' : answer.value, props.verse.text, comparisonRules.value))
 const correctionStats = computed(() => diff.value.correction.reduce((stats, item) => {
   if (item.type === 'extra') stats.extra++
   else if (item.status === 'missing') stats.missing++
@@ -101,7 +118,7 @@ const correctionStats = computed(() => diff.value.correction.reduce((stats, item
 // much you recovered. Leaning on the note or giving up costs you a grade.
 const result = computed(() => {
   if (gaveUp.value) return 'lost'
-  if (answersMatch(answer.value, props.verse.text)) return hintShown.value ? 'shaky' : 'got'
+  if (answersMatch(answer.value, props.verse.text, comparisonRules.value)) return hintShown.value ? 'shaky' : 'got'
   const share = diff.value.total ? diff.value.correct / diff.value.total : 0
   if (share >= 0.9) return 'shaky'
   if (share >= 0.5) return 'shaky'
@@ -140,6 +157,23 @@ onMounted(() => box.value?.focus())
   color: var(--muted-foreground);
   margin: var(--space-2) 0 var(--space-4);
 }
+
+.vr-rules {
+  margin: var(--space-2) 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.vr-rules summary { display: flex; justify-content: space-between; gap: var(--space-2); min-height: 38px; align-items: center; padding: 0 var(--space-3); color: var(--foreground); cursor: pointer; font-weight: 700; }
+.vr-rules summary span { overflow: hidden; color: var(--muted-foreground); font-size: 11px; font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
+.vr-rules-body { display: grid; gap: 8px; padding: 0 var(--space-3) var(--space-3); }
+.vr-rules-body p { margin: 2px 0 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.vr-rules-body label { display: flex; gap: 8px; align-items: center; min-height: 24px; color: var(--foreground); cursor: pointer; }
+.vr-rules-body input { accent-color: var(--primary); }
+.vr-rules-body .vr-case-rule { margin-top: 3px; padding-top: 9px; border-top: 1px solid var(--border); }
 
 .vr-input {
   width: 100%;

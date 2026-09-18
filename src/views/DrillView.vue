@@ -13,6 +13,14 @@
       <p v-if="rangeInput.trim() && resolved.ok" class="drill-picker-note">{{ resolved.label }} · {{ resolved.verses.length }} verses ready</p>
       <p v-else-if="rangeInput.trim() && bibleLoading" class="drill-picker-note">Loading Bible…</p>
       <p v-else-if="rangeInput.trim() && resolved.error" class="drill-picker-note error">{{ resolved.error }}</p>
+      <section v-if="recentDrills.length" class="drill-history" aria-label="Recent drill ranges">
+        <p>Recent</p>
+        <div>
+          <button v-for="item in recentDrills" :key="item.input" @click="openRecent(item)">
+            <span>{{ item.label }}</span><small>{{ item.count }} {{ item.count === 1 ? 'verse' : 'verses' }}</small>
+          </button>
+        </div>
+      </section>
     </div>
 
     <template v-else>
@@ -68,9 +76,11 @@ const { grade, isKnown } = useQueue()
 const { verses: savedVerses, addVerses } = useReview()
 const { bible, loading: bibleLoading } = useBible()
 const selectedRefs = useStorage('drillVerseRefs_v1', [])
+const drillHistory = useStorage('drillHistory_v1', [])
 const choosing = ref(!selectedRefs.value.length)
 const rangeInput = ref('')
 const resolved = computed(() => resolveReference(bible.value, rangeInput.value))
+const recentDrills = computed(() => Array.isArray(drillHistory.value) ? drillHistory.value.slice(0, 10) : [])
 const verses = computed(() => {
   const byRef = new Map(savedVerses.value.map((verse) => [verse.ref, verse]))
   return selectedRefs.value.map((ref) => byRef.get(ref)).filter(Boolean).map((payload) => ({ id: `verse:${payload.ref}`, payload }))
@@ -92,12 +102,23 @@ function nextVerse() {
 
 function startRange() {
   if (!resolved.value.ok) return
+  const historyItem = {
+    input: rangeInput.value.trim(),
+    label: resolved.value.label,
+    count: resolved.value.verses.length,
+  }
+  drillHistory.value = [historyItem, ...recentDrills.value.filter((item) => item.input !== historyItem.input)].slice(0, 10)
   addVerses(resolved.value.verses)
   selectedRefs.value = resolved.value.verses.map((verse) => verse.ref)
   index.value = 0
   stage.value = 'next'
   choosing.value = false
   rangeInput.value = ''
+}
+
+function openRecent(item) {
+  rangeInput.value = item.input
+  startRange()
 }
 
 function finishRecall(result) {
@@ -115,5 +136,5 @@ function finishAllRecall(result) {
 </script>
 
 <style scoped>
-.drill { padding:var(--space-5) var(--space-4) var(--space-10); }.drill-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:var(--space-4); }.drill-head h2 { margin:0; font-size:var(--text-2xl); }.drill-kicker { margin:0 0 2px; color:var(--primary); font-size:10px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }.drill-count { color:var(--muted-foreground); font-size:13px; font-weight:700; }.drill-display { display:flex; gap:4px; margin:0 0 var(--space-4); padding:3px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--muted); }.drill-display button { flex:1; min-height:32px; border:0; border-radius:var(--radius-full); background:transparent; color:var(--muted-foreground); font:inherit; font-size:12px; font-weight:700; }.drill-display button.active { background:var(--card); color:var(--foreground); box-shadow:var(--shadow-sm); }.drill-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:var(--space-5); }.drill-steps button { min-height:38px; padding:7px 3px; border:0; border-bottom:2px solid var(--border); background:transparent; color:var(--muted-foreground); font:700 10px var(--font-reading); text-transform:uppercase; }.drill-steps button.active { border-color:var(--primary); color:var(--foreground); }.drill-complete,.drill-empty { padding:var(--space-5); border:1px solid var(--border); border-radius:var(--radius-xl); background:var(--card); box-shadow:var(--shadow-sm); }.drill-empty h3 { margin:0 0 var(--space-2); font-size:var(--text-xl); }.drill-empty p,.drill-complete p { margin:0 0 var(--space-5); color:var(--muted-foreground); line-height:1.55; }.drill-picker { display:flex; gap:var(--space-2); }.drill-picker .input { min-width:0; flex:1; }.drill-picker .btn { flex:0 0 auto; }.drill-picker-note { margin:var(--space-3) 0 0 !important; font-size:var(--text-sm); }.drill-picker-note.error { color:var(--destructive); }.drill-change { display:block; margin:0 0 var(--space-3) auto; border:0; background:transparent; color:var(--primary); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }.drill-all { display:grid; gap:var(--space-4); }.drill-complete h3 { margin:0 0 var(--space-2); font-size:var(--text-xl); }.drill-complete .btn { width:100%; }.drill-switch { display:block; width:100%; min-height:44px; margin-top:var(--space-3); border:0; background:transparent; color:var(--muted-foreground); font:inherit; cursor:pointer; }
+.drill { padding:var(--space-5) var(--space-4) var(--space-10); }.drill-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:var(--space-4); }.drill-head h2 { margin:0; font-size:var(--text-2xl); }.drill-kicker { margin:0 0 2px; color:var(--primary); font-size:10px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }.drill-count { color:var(--muted-foreground); font-size:13px; font-weight:700; }.drill-display { display:flex; gap:4px; margin:0 0 var(--space-4); padding:3px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--muted); }.drill-display button { flex:1; min-height:32px; border:0; border-radius:var(--radius-full); background:transparent; color:var(--muted-foreground); font:inherit; font-size:12px; font-weight:700; }.drill-display button.active { background:var(--card); color:var(--foreground); box-shadow:var(--shadow-sm); }.drill-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; margin-bottom:var(--space-5); }.drill-steps button { min-height:38px; padding:7px 3px; border:0; border-bottom:2px solid var(--border); background:transparent; color:var(--muted-foreground); font:700 10px var(--font-reading); text-transform:uppercase; }.drill-steps button.active { border-color:var(--primary); color:var(--foreground); }.drill-complete,.drill-empty { padding:var(--space-5); border:1px solid var(--border); border-radius:var(--radius-xl); background:var(--card); box-shadow:var(--shadow-sm); }.drill-empty h3 { margin:0 0 var(--space-2); font-size:var(--text-xl); }.drill-empty p,.drill-complete p { margin:0 0 var(--space-5); color:var(--muted-foreground); line-height:1.55; }.drill-picker { display:flex; gap:var(--space-2); }.drill-picker .input { min-width:0; flex:1; }.drill-picker .btn { flex:0 0 auto; }.drill-picker-note { margin:var(--space-3) 0 0 !important; font-size:var(--text-sm); }.drill-picker-note.error { color:var(--destructive); }.drill-history { margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--border); }.drill-history > p { margin:0 0 var(--space-2) !important; color:var(--muted-foreground); font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }.drill-history > div { display:flex; flex-wrap:wrap; gap:6px; }.drill-history button { display:flex; align-items:baseline; gap:5px; min-height:34px; padding:5px 9px; border:1px solid var(--border); border-radius:var(--radius-full); background:var(--muted); color:var(--foreground); font:inherit; font-size:12px; font-weight:700; cursor:pointer; }.drill-history button small { color:var(--muted-foreground); font-size:10px; font-weight:400; }.drill-change { display:block; margin:0 0 var(--space-3) auto; border:0; background:transparent; color:var(--primary); font:inherit; font-size:13px; font-weight:700; cursor:pointer; }.drill-all { display:grid; gap:var(--space-4); }.drill-complete h3 { margin:0 0 var(--space-2); font-size:var(--text-xl); }.drill-complete .btn { width:100%; }.drill-switch { display:block; width:100%; min-height:44px; margin-top:var(--space-3); border:0; background:transparent; color:var(--muted-foreground); font:inherit; cursor:pointer; }
 </style>

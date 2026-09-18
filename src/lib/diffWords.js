@@ -50,7 +50,7 @@ function lcsPairs(a, b) {
  *   attempted: boolean,
  * }}
  */
-export function diffWords(typed, expected) {
+export function diffWords(typed, expected, rules) {
   const exp = tokenize(expected)
   const got = tokenize(typed)
   const attempted = got.length > 0
@@ -66,7 +66,7 @@ export function diffWords(typed, expected) {
     }
   }
 
-  const pairs = lcsPairs(exp.map(normalizeAnswer), got.map(normalizeAnswer))
+  const pairs = lcsPairs(exp.map((word) => normalizeAnswer(word, rules)), got.map((word) => normalizeAnswer(word, rules)))
   const matchedExp = new Set(pairs.map(([e]) => e))
   const matchedGot = new Set(pairs.map(([, g]) => g))
 

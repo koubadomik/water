@@ -44,6 +44,17 @@ describe('answersMatch', () => {
     expect(answersMatch('Hidden phrase.', 'hidden phrase')).toBe(true)
   })
 
+  test('can require punctuation or only sentence dots', () => {
+    expect(answersMatch('hidden phrase', 'hidden phrase.', { punctuation: 'all', caseSensitive: false })).toBe(false)
+    expect(answersMatch('hidden phrase!', 'hidden phrase.', { punctuation: 'sentence-dots', caseSensitive: false })).toBe(false)
+    expect(answersMatch('hidden phrase!', 'hidden phrase', { punctuation: 'sentence-dots', caseSensitive: false })).toBe(true)
+  })
+
+  test('can require upper and lower case', () => {
+    expect(answersMatch('Hidden phrase', 'hidden phrase', { punctuation: 'ignore', caseSensitive: true })).toBe(false)
+    expect(answersMatch('Hidden phrase', 'hidden phrase', { punctuation: 'ignore', caseSensitive: false })).toBe(true)
+  })
+
   test('accepts dead-key typed Czech against pasted scripture', () => {
     const expected = 'jiné veliké a podivuhodné znamení'
     expect(answersMatch(expected.normalize('NFD'), expected.normalize('NFC'))).toBe(true)
